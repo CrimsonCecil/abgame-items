@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ABGame 道具系统 Demo v3（参考三角洲行动 道具交互）</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;user-select:none;-webkit-user-select:none}
+html,body{height:100%;background:#15171f;color:#eee;font-family:"Microsoft YaHei","PingFang SC","Noto Sans CJK SC",sans-serif;overflow:hidden}
+#app{display:flex;height:100vh}
+#stageWrap{flex:1;position:relative;overflow:hidden}
+#stage{position:absolute;width:1280px;height:720px;transform-origin:0 0;background:#000;border-radius:10px;overflow:hidden;box-shadow:0 10px 40px #0008;touch-action:none}
+#cv{position:absolute;left:0;top:0}
+#side{width:340px;background:#1f2230;border-left:1px solid #333a4d;padding:14px;overflow-y:auto;font-size:13px;line-height:1.6}
+#side h2{font-size:16px;color:#ffd166}
+#side h3{font-size:13px;margin:12px 0 6px;color:#9ecbff;border-left:3px solid #4aa8ff;padding-left:6px}
+.stat{display:flex;gap:6px;margin-top:6px}
+.stat div{flex:1;background:#151720;border-radius:8px;padding:5px;text-align:center;font-size:12px}
+.stat b{display:block;font-size:17px;color:#7cf29c}
+.dbg{display:flex;flex-wrap:wrap;gap:4px}
+.dbg button,.req button{background:#2f3546;color:#cde;border:1px solid #445;border-radius:5px;padding:3px 8px;cursor:pointer;font-size:12px}
+.dbg button:hover,.req button:hover{background:#3d4660}
+.req{background:#151720;border-radius:8px;padding:7px 8px;margin-bottom:6px}
+.req .t{font-weight:bold;color:#fff}
+.req p{color:#aab;font-size:12px}
+kbd{background:#393f52;border-radius:3px;padding:0 4px;font-size:11px;border-bottom:2px solid #222}
+#log{background:#11131a;border-radius:6px;padding:6px;height:130px;overflow-y:auto;font-size:12px;color:#9a9}
+#log div{border-bottom:1px dashed #222}
+
+/* ---------- HUD ---------- */
+.hud{position:absolute;left:0;top:0;width:1280px;height:720px;pointer-events:none;font-size:14px}
+.hud .p{pointer-events:auto}
+.rules{position:absolute;left:14px;top:12px;width:240px;background:#0009;border-radius:10px;padding:8px 10px;font-size:12px;line-height:1.7}
+.rules b{color:#7cf29c;font-size:13px}
+.timer{position:absolute;top:12px;left:50%;transform:translateX(-50%);background:#000a;border-radius:20px;padding:5px 18px;font-weight:bold}
+.timer b{font-size:20px;color:#ffd166}
+.idbox{position:absolute;top:12px;right:16px;background:#000a;border-radius:10px;padding:5px 12px;font-size:12px;text-align:right}
+.verTag{position:absolute;top:56px;left:50%;transform:translateX(-50%);background:#ffb627;color:#222;font-weight:bold;font-size:12px;border-radius:6px;padding:2px 10px}
+#joy{position:absolute;left:80px;top:380px;width:150px;height:150px;border-radius:50%;background:#ffffff14;border:2px solid #fff3}
+#joy i{position:absolute;left:50%;top:50%;width:60px;height:60px;margin:-30px;border-radius:50%;background:#fff5}
+
+/* 底部：背包键 + 收获 */
+#bagBtn{position:absolute;left:22px;bottom:22px;width:62px;height:62px;border-radius:50%;background:#000a;border:2px solid #ffffff60;display:flex;align-items:center;justify-content:center;font-size:30px;cursor:pointer}
+#bagBtn small{position:absolute;bottom:-17px;font-size:10px;white-space:nowrap;color:#fffc}
+#gain{position:absolute;left:96px;bottom:34px;background:#000a;border-radius:8px;padding:3px 10px;font-size:12px;color:#ccd}
+#gain b{color:#ffd166;font-size:15px}
+
+/* 武器栏（三角洲式卡片） */
+#wbar{position:absolute;left:457px;bottom:29px;display:flex;gap:6px}
+.wc{width:118px;height:58px;background:#000b;border:1px solid #ffffff30;border-radius:6px;position:relative;cursor:pointer;display:flex;align-items:center;gap:6px;padding:0 8px;overflow:hidden}
+.wc .ic{font-size:30px}
+.wc .nm{font-size:12px;font-weight:bold;line-height:1.2}
+.wc .du{font-size:11px;color:#cfd6e4}
+.wc .du.low{color:#ff7b6b}
+.wc .k{position:absolute;right:5px;top:2px;font-size:10px;color:#fff8}
+.wc .lk{position:absolute;right:5px;bottom:3px;font-size:11px}
+.wc.sel{border-color:#7cf29c;background:#163423d0}
+.wc.sel:before{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:#7cf29c}
+.wc.emp{color:#fff5;font-size:12px;justify-content:center}
+.wc .dbar{position:absolute;left:8px;right:8px;bottom:4px;height:3px;background:#0008;border-radius:2px}
+.wc .dbar i{position:absolute;left:0;top:0;bottom:0;border-radius:2px}
+.wc.flash{animation:fl .5s}
+@keyframes fl{0%{transform:scale(1.15);box-shadow:0 0 18px #ffd166}100%{transform:scale(1)}}
+/* 生命条（武器栏下方，三角洲同位置） */
+#hpWrap{position:absolute;left:457px;bottom:10px;width:366px}
+.bar{height:8px;background:#0009;border-radius:4px;overflow:hidden;position:relative}
+.bar>i{position:absolute;left:0;top:0;bottom:0;transition:width .15s}
+#hpBar{background:linear-gradient(#f4f6fa,#cfd5df)}
+#hpBar.low{background:linear-gradient(#ff7b6b,#e0453a)}
+#stBarW{height:3px;margin-top:2px}
+#stBar{background:#59b6ff}
+#hpTxt{position:absolute;left:0;right:0;top:0;height:11px;line-height:11px;text-align:center;font-size:9px;font-weight:bold;color:#222;z-index:1}
+#hpWrap .bar:first-of-type{height:11px}
+/* 快捷消耗品键（武器栏左侧） */
+.qbtn{position:absolute;width:66px;height:66px;border-radius:50%;background:#000b;border:2px solid #ffffff70;display:flex;align-items:center;justify-content:center;font-size:32px;cursor:pointer;touch-action:none}
+.qbtn .n{position:absolute;bottom:-18px;font-size:12px;font-weight:bold;text-shadow:0 1px 2px #000;white-space:nowrap}
+.qbtn .k{position:absolute;top:-16px;font-size:10px;color:#fffa;white-space:nowrap}
+.qbtn.zero>.ic{filter:grayscale(1);opacity:.3}
+.qbtn.rec{animation:rec 1s infinite}
+@keyframes rec{50%{box-shadow:0 0 0 5px #7cf29c88,0 0 18px #7cf29c}}
+.qbtn .cdm{position:absolute;inset:0;border-radius:50%;pointer-events:none}
+#qk{left:374px;bottom:24px}
+#gk{left:836px;bottom:24px;width:58px;height:58px;font-size:28px}
+#gk .tagU{position:absolute;top:-6px;right:-10px;background:#2fbf63;color:#fff;font-size:9px;border-radius:4px;padding:0 3px;font-weight:bold}
+/* 情境推荐气泡 */
+#hint{position:absolute;left:220px;top:560px;background:#f4f6faee;color:#222;border-radius:6px;padding:4px 10px;font-size:12px;font-weight:bold;display:none;white-space:nowrap}
+#hint:after{content:"";position:absolute;right:-6px;top:50%;margin-top:-6px;border:6px solid transparent;border-left-color:#f4f6faee;border-right:0}
+#hint.on{display:block}
+/* 使用读条 */
+#prog{position:absolute;left:490px;top:575px;width:300px;height:32px;background:#000c;border-radius:4px;display:none;align-items:center;padding:0 10px;gap:8px}
+#prog.on{display:flex}
+#prog .nm{font-size:13px;font-weight:bold;flex:1}
+#prog .tm{font-size:13px;color:#ffd166}
+#prog .x{width:26px;height:26px;border:1px solid #fff8;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;border-radius:3px}
+#prog .pb{position:absolute;left:0;bottom:0;height:3px;background:#f4f6fa}
+/* 右侧按键 */
+.abtn{position:absolute;border-radius:50%;background:#000000a0;border:3px solid #ffffff70;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;transition:transform .06s}
+.abtn:active,.abtn.press{transform:scale(.9);border-color:#fff}
+.abtn .cdm{position:absolute;inset:0;border-radius:50%;pointer-events:none}
+.abtn .cdn{position:absolute;font-size:20px;font-weight:bold;text-shadow:0 0 4px #000;pointer-events:none}
+.abtn .kl{position:absolute;bottom:-17px;font-size:10px;color:#fffc;white-space:nowrap;text-shadow:0 1px 2px #000}
+#bMain{left:1135px;top:570px;width:118px;height:118px;font-size:56px}
+#bMain .ring{position:absolute;inset:-7px;border-radius:50%;pointer-events:none;-webkit-mask:radial-gradient(circle,transparent 58px,#000 59px);mask:radial-gradient(circle,transparent 58px,#000 59px)}
+#bMain .nm{position:absolute;top:-20px;font-size:12px;font-weight:bold;white-space:nowrap;text-shadow:0 1px 3px #000}
+#bDash{left:1040px;top:628px;width:70px;height:70px;font-size:30px}
+#bSkill{left:1050px;top:510px;width:74px;height:74px;font-size:32px}
+#bJump{left:1160px;top:462px;width:70px;height:70px;font-size:28px}
+#bSearch{position:absolute;left:760px;top:430px;background:#000c;border:1px solid #ffd166;border-radius:22px;padding:6px 16px;font-weight:bold;color:#ffd166;display:none;cursor:pointer}
+#bSearch.on{display:block}
+#toasts{position:absolute;top:100px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:5px}
+.toast{background:#000000d8;padding:6px 18px;border-radius:4px;font-weight:bold;animation:tin .2s;white-space:nowrap;font-size:13px}
+.toast.warn{color:#ffd0c8}.toast.ok{color:#9ff5b5}.toast.info{color:#dfe8ff}.toast.gold{color:#ffd166;border:1px solid #ffc23d}
+@keyframes tin{from{opacity:0;transform:translateY(-6px)}}
+
+/* 轮盘（屏幕中央，三角洲式） */
+#wheel{position:absolute;left:640px;top:330px;width:0;height:0;display:none}
+#wheel.on{display:block}
+#wheel .ring{position:absolute;left:-150px;top:-150px;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,#0000 0 58px,#000000a8 59px 150px);border:1px solid #ffffff30}
+#wheel .ctr{position:absolute;left:-58px;top:-58px;width:116px;height:116px;border-radius:50%;background:#2a2e3ccc;border:1px solid #ffffff40;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-size:13px;font-weight:bold;line-height:1.35}
+#wheel .ctr small{font-size:11px;color:#cfd6e4;font-weight:normal}
+#wheel .it{position:absolute;width:76px;height:64px;margin:-32px -38px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:30px;border-radius:10px}
+#wheel .it span{font-size:12px;font-weight:bold}
+#wheel .it.zero{opacity:.3;filter:grayscale(1)}
+#wheel .it.on{background:#ffffff26;outline:2px solid #ffd166}
+#wheel .it.cur:after{content:"当前";position:absolute;top:-8px;font-size:9px;background:#7cf29c;color:#123;border-radius:3px;padding:0 3px}
+#wheel .tip{position:absolute;left:-150px;width:300px;top:160px;text-align:center;font-size:12px;color:#fffc;text-shadow:0 1px 2px #000}
+
+/* ---------- 背包（三角洲式双栏） ---------- */
+#bag{position:absolute;inset:0;background:#0e1118f2;display:none;flex-direction:column;padding:12px 22px}
+#bag.on{display:flex}
+.bhead{display:flex;align-items:center;gap:10px;height:34px}
+.bhead .tab{background:#1e5a3a;color:#d9ffe6;padding:3px 26px;border-radius:2px;font-weight:bold}
+.bhead .tab.g{background:#262b38;color:#99a}
+.bhead .x{margin-left:auto;width:32px;height:32px;border:1px solid #fff6;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px}
+.bbody{flex:1;display:flex;gap:16px;margin-top:8px;min-height:0}
+.pn{background:#191d28;border:1px solid #2b3142;display:flex;flex-direction:column}
+.pn .ph{height:32px;display:flex;align-items:center;padding:0 12px;font-weight:bold;background:#232837;gap:10px}
+.pn .ph .r{margin-left:auto;font-weight:normal;color:#aab;font-size:12px}
+.pn.me{width:690px}
+.pn.box{flex:1}
+.pn.box .ph{background:#6b2430}
+.mecols{display:flex;gap:12px;padding:10px 12px;flex:1;min-height:0}
+.colA{width:170px;display:flex;flex-direction:column;gap:10px}
+.colB{flex:1;display:flex;flex-direction:column;gap:8px;overflow:auto}
+.card2{background:#121620;border:1px solid #2b3142;padding:8px}
+.card2 .lb{font-size:12px;color:#aab;margin-bottom:5px;display:flex;justify-content:space-between}
+.gainBig{font-size:22px;font-weight:bold;color:#ffd166}
+.secT{font-size:12px;background:#232837;padding:2px 8px;display:flex;justify-content:space-between;color:#cfd6e4}
+.secT em{font-style:normal;color:#8d96aa}
+.grid{display:grid;gap:4px}
+.cell{width:62px;height:62px;background:#232837;border:1px solid #39405a;position:relative;display:flex;align-items:center;justify-content:center;font-size:30px;cursor:pointer}
+.cell.emp{cursor:default;background:#1a1e2a;border-style:dashed;border-color:#2e3447}
+.cell.q1{background:linear-gradient(#2d4a35,#223428);border-color:#5ad17a}
+.cell.q2{background:linear-gradient(#24405e,#1d2f45);border-color:#4aa8ff}
+.cell.q3{background:linear-gradient(#41305e,#2f2445);border-color:#b26bff}
+.cell.q4{background:linear-gradient(#5e4a1e,#433518);border-color:#ffc23d}
+.cell .cat{position:absolute;left:0;top:0;width:15px;height:15px;font-size:9px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:bold;border-bottom-right-radius:5px}
+.cell .vl{position:absolute;right:2px;bottom:0;font-size:10px;color:#ffd166;font-weight:bold}
+.cell .ct{position:absolute;right:3px;bottom:0;font-size:11px;font-weight:bold}
+.cell .use{position:absolute;left:2px;bottom:2px;font-size:9px;background:#2fbf63;color:#fff;border-radius:3px;padding:0 3px;line-height:13px;font-weight:bold}
+.cell .bk{position:absolute;right:2px;top:1px;font-size:9px;color:#ff9a8a}
+.cell.zero>.ic{filter:grayscale(1);opacity:.3}
+.cell.pick{outline:2px solid #fff;outline-offset:1px;z-index:1}
+.cell .dbar{position:absolute;left:4px;right:4px;bottom:3px;height:3px;background:#0008}
+.cell .dbar i{position:absolute;left:0;top:0;bottom:0}
+.cell.unk{background:#121620;border-color:#2b3142;color:#556;font-size:20px}
+.cell.searching{background:#121620}
+.cell.searching:after{content:"🔍";font-size:22px;animation:sx .6s infinite alternate}
+@keyframes sx{to{transform:translate(4px,-3px)}}
+.wcard{width:130px;height:66px;background:#232837;border:1px solid #39405a;position:relative;cursor:pointer;display:flex;align-items:center;gap:6px;padding:0 8px}
+.wcard .ic{font-size:30px}
+.wcard .t{font-size:12px;line-height:1.3}
+.wcard.sel{border-color:#7cf29c}
+.wcard.pick{outline:2px solid #fff}
+.wcard.emp{color:#556;justify-content:center;cursor:default;border-style:dashed}
+.wcard .lk{position:absolute;right:4px;top:2px;font-size:11px}
+.wcard .cat{position:absolute;left:0;top:0;width:15px;height:15px;font-size:9px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:bold;background:#ff5a4e;border-bottom-right-radius:5px}
+.safeBox{display:flex;gap:4px}
+.safeBox .cell{width:74px;height:74px;border-color:#ff7b7b}
+.searchBar{padding:10px 12px;display:flex;flex-direction:column;gap:8px;flex:1}
+.empty{color:#667;text-align:center;margin:auto;font-size:13px;line-height:2}
+.bfoot{height:28px;display:flex;align-items:center;font-size:12px;color:#8d96aa;gap:16px}
+.bfoot b{color:#ffd166}
+.btn2{background:#2f3546;color:#e8eaf2;border:1px solid #4a5068;padding:4px 12px;cursor:pointer;font-size:12px}
+.btn2.y{background:#ffb627;color:#222;border-color:#ffb627;font-weight:bold}
+/* 详情卡 + 放入菜单 */
+#detail{position:absolute;right:26px;top:96px;width:300px;background:#1a1e2a;border:1px solid #4a5068;box-shadow:0 8px 30px #000a;display:none}
+#detail.on{display:block}
+#detail .dh{display:flex;align-items:center;gap:6px;padding:6px 10px;background:#232837;font-weight:bold}
+#detail .dh .x{margin-left:auto;cursor:pointer;font-size:16px}
+#detail .art{height:110px;display:flex;align-items:center;justify-content:center;font-size:66px;position:relative}
+#detail .art .vv{position:absolute;left:10px;top:6px;font-size:12px;color:#ffd166}
+#detail .row2{display:flex;gap:6px;padding:0 10px}
+#detail .row2 button{flex:1;padding:6px;background:#121620;border:1px solid #4a5068;color:#eee;cursor:pointer;font-size:13px}
+#detail .row2 button.use{border-color:#7cf29c;color:#9ff5b5}
+#detail .row2 button:disabled{opacity:.35;cursor:not-allowed}
+#detail .info{padding:8px 10px;font-size:12px;color:#cfd6e4;line-height:1.7}
+#detail .info .ln{display:flex;justify-content:space-between;border-bottom:1px solid #2b3142}
+#detail .tags span{display:inline-block;font-size:11px;padding:0 6px;border-radius:3px;color:#fff;margin-right:4px;font-weight:bold}
+#putMenu{position:absolute;right:332px;top:226px;width:72px;background:#1a1e2a;border:1px solid #4a5068;display:none;flex-direction:column}
+#putMenu.on{display:flex}
+#putMenu .h{text-align:center;font-size:12px;padding:3px;background:#232837}
+#putMenu button{background:none;border:0;border-top:1px solid #2b3142;color:#eee;padding:8px 2px;cursor:pointer;font-size:11px;display:flex;flex-direction:column;align-items:center;gap:1px}
+#putMenu button b{font-size:20px}
+#putMenu button:disabled{opacity:.3;cursor:not-allowed}
+#settle{position:absolute;inset:0;background:#000b;display:none;align-items:center;justify-content:center}
+#settle.on{display:flex}
+.settleBox{width:620px;background:#232837;border-radius:6px;border:1px solid #4a5068;padding:20px;text-align:center}
+.settleBox h3{font-size:24px;margin-bottom:10px}
+.settleBox table{width:100%;border-collapse:collapse;margin:10px 0;font-size:14px}
+.settleBox td{padding:6px;border-bottom:1px solid #3a3f52;text-align:left}
+.settleBox td:last-child{text-align:right}
+.settleBox .lost{color:#ff8a80;text-decoration:line-through}
+.settleBox button{margin-top:10px;background:#ffb627;border:0;border-radius:4px;padding:8px 24px;font-weight:bold;cursor:pointer}
+</style>
+</head>
+<body>
+<div id="app">
+<div id="stageWrap"><div id="stage">
+ <canvas id="cv" width="1280" height="720"></canvas>
+ <div class="hud">
+  <div class="rules"><b>⚠ 学生行为准则</b><br>① 让[红色书包]空着很危险<br>② 看到箭头房间不要回头<br>③ 请不要在[跳房子]格子内站太久</div>
+  <div class="timer">距离撤离点开启还有 <b id="timer">07:16</b></div>
+  <div class="idbox">学生ID: Cecilcai-Company-1-C<br>ping: 12ms</div>
+  <div class="verTag">道具系统 v3 · 参考三角洲行动</div>
+  <div id="joy"><i id="knob"></i></div>
+  <div id="bagBtn" class="p">🎒<small>背包 B</small></div>
+  <div id="gain">本局收获 <b id="gainV">0</b></div>
+  <div id="hint"></div>
+  <div id="prog" class="p"><span class="nm" id="progN"></span><span class="tm" id="progT"></span><span class="x" id="progX">✕</span><i class="pb" id="progB"></i></div>
+  <div id="qk" class="qbtn p"></div>
+  <div id="wbar" class="p"></div>
+  <div id="hpWrap"><div class="bar"><i id="hpBar"></i><span id="hpTxt"></span></div><div class="bar" id="stBarW"><i id="stBar"></i></div></div>
+  <div id="gk" class="qbtn p"></div>
+  <div class="abtn p" id="bSkill">🐰<span class="cdm"></span><span class="cdn"></span><span class="kl">技能 E</span></div>
+  <div class="abtn p" id="bJump">🤸<span class="cdm"></span><span class="cdn"></span><span class="kl">跳跃 Space</span></div>
+  <div class="abtn p" id="bDash">💨<span class="cdm"></span><span class="cdn"></span><span class="kl">冲刺 K</span></div>
+  <div class="abtn p" id="bMain"></div>
+  <div id="bSearch" class="p"></div>
+  <div id="wheel"><div class="ring"></div><div id="wItems"></div><div class="ctr" id="wCtr"></div><div class="tip" id="wTip"></div></div>
+  <div id="toasts"></div>
+ </div>
+ <div id="bag" class="p"></div>
+ <div id="settle" class="p"></div>
+</div></div>
+<div id="side">
+ <h2>ABGame 道具系统 Demo v3</h2>
+ <div style="color:#99a;font-size:12px">交互参考《三角洲行动》实机：快捷道具键 + 轮盘、使用读条、智能拦截 / 推荐、背包双栏搜索、物品详情 + 放入菜单。</div>
+ <div class="stat"><div>本局收获<b id="sVal">0</b></div><div>安全箱<b id="sSafe">0</b></div><div>击倒<b id="sKill">0</b></div></div>
+ <div class="dbg" style="margin-top:6px">
+  <button id="dReset">↺ 重置</button><button id="dHurt">💥 受伤-45</button><button id="dBreak">🔪 当前武器耐久→1</button>
+  <button id="dSpawn">🧸 刷怪</button><button id="dLoot">💎 刷战利品</button><button id="dBox">🗄 传送到礼盒</button>
+  <button id="dDie">☠ 被击倒结算</button><button id="dExit">🚁 成功撤离结算</button>
+ </div>
+ <h3>体验指引</h3>
+ <div class="req"><div class="t">① 快捷道具键：点一下直接用（B-3）</div><p>武器栏左边的圆键。点一下 = 立即开始使用当前道具，出现读条，可点 ✕ 取消。满血时点血瓶会被拦下，不扣数量。</p><button id="g1">满血点一下试试</button></div>
+ <div class="req"><div class="t">② 长按 = 道具轮盘</div><p>按住快捷道具键（或按住 <kbd>R</kbd>）拖向一个方向，松手就用这个道具，它也会成为新的快捷道具。拖回中间松手 = 取消。</p></div>
+ <div class="req"><div class="t">③ 情境推荐</div><p>生命低于 40% 时，快捷键自动换成最合适的回血道具，绿色呼吸光圈 + 气泡"点击使用 急救包"。</p><button id="g3">受伤看推荐</button></div>
+ <div class="req"><div class="t">④ 武器栏 2 格 + 拳头锁定格（B-1 / B-2）</div><p>点卡片切换；长按武器栏（或按住 <kbd>Q</kbd>）出武器轮盘，可以直接换上背包里的备用武器。第 3 格是拳头，带 🔒，永远在。</p><button id="g4">让武器快坏</button></div>
+ <div class="req"><div class="t">⑤ 背包双栏 + 搜索容器</div><p>靠近 🗄储物柜 / 🎁神秘礼盒，点"搜索"或按 <kbd>F</kbd>。右栏逐个搜出物品；点物品看详情，用"放入"菜单放到想要的位置，双击 = 按规则自动放好。</p><button id="g5">去礼盒那里</button></div>
+ <div class="req"><div class="t">⑥ 道具键（可使用的战利品，B-0）</div><p>🧨摔炮 本身算战利品，有价值、有"可用"角标；右边道具键可以直接扔出去，代价是少带出这份价值。</p></div>
+ <h3>按键</h3>
+ <div style="font-size:12px;color:#bbc">
+  移动 <kbd>WASD</kbd>／左侧摇杆　攻击 <kbd>J</kbd>　技能 <kbd>E</kbd>　冲刺 <kbd>K</kbd>　跳跃 <kbd>Space</kbd><br>
+  快捷道具 <kbd>R</kbd>（按住 = 轮盘，用鼠标方向选）<br>
+  武器 <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd>／<kbd>Q</kbd> 循环（按住 = 武器轮盘）<br>
+  道具键 <kbd>G</kbd>　搜索 <kbd>F</kbd>　背包 <kbd>B</kbd>　关闭 <kbd>Esc</kbd>
+ </div>
+ <h3>事件日志</h3>
+ <div id="log"></div>
+</div>
+</div>
+<script>
+const $=s=>document.querySelector(s);
+const stage=$('#stage'),cv=$('#cv'),ctx=cv.getContext('2d');
+const W=1280,H=720,BAGCAP=10,CONS_MAX=5,SAFE_N=2,SAFE_TH=3000,LONG=260;
+const CATC={weapon:'#ff5a4e',consumable:'#2fbf63',loot:'#f2b01e'},CATN={weapon:'武器',consumable:'消耗品',loot:'战利品'},CATI={weapon:'⚔',consumable:'✚',loot:'$'};
+const DEF={
+ fist:{n:'拳头',ic:'👊',cat:'weapon',dmg:8,rng:62,cd:.35,kb:60,val:0,desc:'默认攻击。固定在武器栏第 3 格，不会坏、不能丢。'},
+ knife:{n:'菜刀',ic:'🔪',cat:'weapon',dmg:22,rng:84,cd:.45,kb:18,dur:12,val:800,desc:'近战挥砍。'},
+ croc:{n:'鳄鱼枪',ic:'🐊',cat:'weapon',dmg:16,rng:420,cd:.55,kb:14,dur:15,val:2000,ranged:1,pc:'#9be36b',desc:'鳄鱼玩具枪，远程射击。'},
+ bubble:{n:'泡泡枪',ic:'🔫',cat:'weapon',dmg:12,rng:360,cd:.4,kb:10,dur:20,val:1500,ranged:1,pc:'#bfe8ff',desc:'远程连发泡泡。'},
+ brick:{n:'板砖',ic:'🧱',cat:'weapon',dmg:35,rng:72,cd:.8,kb:40,dur:5,val:300,desc:'一下一个，但很快就碎。'},
+ potionS:{n:'小血瓶',ic:'🧪',cat:'consumable',heal:25,t:1.0,val:100,desc:'恢复 25 生命。'},
+ potionL:{n:'急救包',ic:'💊',cat:'consumable',heal:60,t:2.5,val:300,desc:'恢复 60 生命，读条较长。'},
+ energy:{n:'能量饮料',ic:'🥤',cat:'consumable',sta:100,t:.8,val:80,desc:'体力回满。'},
+ candy:{n:'加速糖',ic:'🍬',cat:'consumable',spd:5,t:.5,val:150,desc:'5 秒内移速 +40%。'},
+ book:{n:'习题册',ic:'📕',cat:'loot',val:400,desc:'纯战利品，撤离后结算。'},
+ duck:{n:'小黄鸭',ic:'🦆',cat:'loot',val:600,desc:'纯战利品，撤离后结算。'},
+ camera:{n:'拍立得',ic:'📷',cat:'loot',val:1800,desc:'纯战利品，撤离后结算。'},
+ trophy:{n:'奖杯',ic:'🏆',cat:'loot',val:3000,desc:'纯战利品，撤离后结算。'},
+ watch:{n:'金怀表',ic:'⌚',cat:'loot',val:5000,desc:'纯战利品，撤离后结算。'},
+ gem:{n:'钻石',ic:'💎',cat:'loot',val:8000,desc:'纯战利品，撤离后结算。'},
+ popper:{n:'摔炮',ic:'🧨',cat:'loot',usable:1,val:1200,desc:'可使用的战利品（道具）：向前方扔出，半径 100 内的怪物眩晕 1.5 秒。用掉就不能带出了。'},
+};
+const CONS=['potionS','potionL','energy','candy'];
+const OBST=[{x:330,y:180,w:200,h:64,n:'课桌'},{x:820,y:150,w:220,h:60,n:'讲台'},{x:600,y:330,w:64,h:150,n:'课桌'},{x:900,y:420,w:150,h:56,n:'课桌'}];
+let S,UID=1,SC=1;
+const q=v=>v>=6000?4:v>=3000?3:v>=1000?2:1;
+const mk=(id,dur)=>({uid:UID++,id,dur:dur??DEF[id].dur});
+const fmt=v=>v.toLocaleString();
+const kv=v=>v>=1000?(v/1000).toFixed(v%1000?1:0)+'K':v;
+
+function reset(){
+ S={hp:80,hpMax:80,st:100,stMax:100,x:250,y:470,fx:1,fy:0,z:0,vz:0,
+  weapons:[mk('knife'),mk('croc')],curW:0,bag:[],safe:[],cons:{potionS:2,potionL:1,energy:1,candy:0},quick:'potionS',quickManual:false,
+  ground:[],mons:[],parts:[],projs:[],ghosts:[],boxes:[],
+  atkCd:0,cd:{skill:0,dash:0,jump:0},CD:{skill:8,dash:3,jump:.9},dashT:0,dvx:0,dvy:0,spdT:0,
+  punch:1,swing:null,kills:0,bagOpen:false,sel:null,time:436,respawn:0,walk:0,over:false,use:null,box:null,wheel:null};
+ S.bag=[mk('book'),mk('popper')];
+ const G=(id,x,y)=>S.ground.push({id,x,y,dur:DEF[id].dur,lock:0});
+ G('bubble',420,600);G('potionS',160,300);G('energy',1100,330);G('candy',480,120);G('camera',700,640);G('brick',760,560);
+ S.boxes.push(mkBox('储物柜',140,215,false,['potionS','book','duck','brick','camera']));
+ S.boxes.push(mkBox('储物柜',1180,520,false,['potionL','energy','trophy','book']));
+ S.boxes.push(mkBox('神秘礼盒',720,250,true,['gem','watch','popper','potionL','bubble','camera']));
+ spawnMon(820,560,'bear');spawnMon(1080,250,'worm');spawnMon(150,640,'bear');
+ $('#log').innerHTML='';log('进入对局（v3）');$('#bag').classList.remove('on');$('#settle').classList.remove('on');$('#wheel').classList.remove('on');
+ refresh();
+}
+function mkBox(n,x,y,top,ids){return {n,x,y,top,items:ids.map(id=>({e:mk(id),rev:false})),prog:0}}
+function spawnMon(x,y,t){
+ if(x==null){do{x=80+Math.random()*1120;y=120+Math.random()*480}while(Math.hypot(x-S.x,y-S.y)<320)}
+ t=t||(Math.random()<.5?'bear':'worm');
+ S.mons.push({x,y,r:24,hp:60,max:60,ic:t==='bear'?'🧸':'🐛',nm:t==='bear'?'B1抱抱熊':'C1猫猫虫',stun:0,hitT:0,atkCd:0,vx:0,vy:0});
+}
+let tm={};
+function toast(t,c='info'){const n=performance.now();if(tm[t]&&n-tm[t]<700)return;tm[t]=n;const d=document.createElement('div');d.className='toast '+c;d.textContent=t;const b=$('#toasts');b.appendChild(d);while(b.children.length>3)b.firstChild.remove();setTimeout(()=>d.remove(),1900)}
+function log(t){const m=Math.floor(S.time/60),s=Math.floor(S.time%60);const d=document.createElement('div');d.textContent=`[${m}:${String(s).padStart(2,'0')}] ${t}`;$('#log').prepend(d)}
+function floatTxt(x,y,s,c){S.parts.push({x,y,vx:0,vy:-50,t:.9,T:.9,txt:s,c})}
+function burst(x,y,c,n,sp=120){for(let i=0;i<n;i++){const a=Math.random()*6.28;S.parts.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,t:.5,T:.5,r:4,c})}}
+const cur=()=>S.curW>=0&&S.curW<2?S.weapons[S.curW]:null;
+const curId=()=>cur()?cur().id:'fist';
+const bagWeap=()=>S.bag.filter(e=>DEF[e.id].cat==='weapon');
+const usables=()=>S.bag.filter(e=>DEF[e.id].usable);
+function totalVal(){let v=0;S.weapons.forEach(w=>w&&(v+=DEF[w.id].val));S.bag.forEach(e=>v+=DEF[e.id].val);S.safe.forEach(e=>v+=DEF[e.id].val);CONS.forEach(c=>v+=S.cons[c]*DEF[c].val);return v}
+let flashKey=null;
+
+/* ---------- 拾取路由（走过地面物品 / 搜索容器双击 / 一键拾取 共用） ---------- */
+function route(e,src){
+ const d=DEF[e.id];
+ if(d.cat==='consumable'){
+  if(S.cons[e.id]>=CONS_MAX){toast(`${d.n} 已满 ${CONS_MAX}/${CONS_MAX}`,'warn');return false}
+  S.cons[e.id]++;toast(`+1 ${d.ic}${d.n} → 消耗品袋`,'ok');return true;
+ }
+ if(d.cat==='weapon'){
+  for(let i=0;i<2;i++)if(!S.weapons[i]){S.weapons[i]=e;flashKey='w'+i;
+   if(S.curW===2){S.curW=i;toast(`${d.ic}${d.n} → 武器栏${i+1}，已自动装备`,'ok')}else toast(`${d.ic}${d.n} → 武器栏${i+1}`,'ok');return true}
+  if(S.bag.length<BAGCAP){S.bag.push(e);toast(`武器栏已满，${d.n} → 背包（备用）`,'info');return true}
+  toast(`背包已满，${d.n} 未拾取（打开背包手动替换）`,'warn');return false;
+ }
+ if(d.val>=SAFE_TH&&!d.usable){
+  if(S.safe.length<SAFE_N){S.safe.push(e);toast(`${d.ic}${d.n} +${fmt(d.val)} → 🔒安全箱`,'gold');return true}
+  const low=S.safe.reduce((a,b)=>DEF[a.id].val<=DEF[b.id].val?a:b);
+  if(DEF[low.id].val<d.val){S.safe.splice(S.safe.indexOf(low),1,e);toast(`${d.ic}${d.n} 更贵，换进 🔒安全箱`,'gold');toBag(low,true);return true}
+ }
+ return toBag(e);
+}
+function toBag(e,silent){
+ const d=DEF[e.id];
+ if(S.bag.length<BAGCAP){S.bag.push(e);if(!silent)toast(`${d.ic}${d.n} +${fmt(d.val)} → 背包`,q(d.val)>=3?'gold':'ok');return true}
+ let low=null;S.bag.forEach(x=>{if(!low||DEF[x.id].val<DEF[low.id].val)low=x});
+ if(low&&DEF[low.id].val<d.val){S.bag.splice(S.bag.indexOf(low),1);S.bag.push(e);
+  S.ground.push({id:low.id,x:S.x-S.fx*40,y:S.y-S.fy*40,dur:low.dur,lock:1});
+  toast(`背包满：已用 ${d.ic}${d.n} 替换 ${DEF[low.id].ic}${DEF[low.id].n}`,'gold');log(`满包替换 ${DEF[low.id].n} → ${d.n}`);return true}
+ toast(`背包已满，${d.n} 价值较低未拾取`,'warn');return false;
+}
+function weaponBreak(){
+ const i=S.curW,d=DEF[S.weapons[i].id];S.weapons[i]=null;
+ const sp=bagWeap().sort((a,b)=>DEF[b.id].val-DEF[a.id].val)[0];
+ if(sp){S.bag.splice(S.bag.indexOf(sp),1);S.weapons[i]=sp;flashKey='w'+i;toast(`${d.n} 损坏！备用 ${DEF[sp.id].ic}${DEF[sp.id].n} 自动补到第${i+1}格`,'warn');log(`${d.n} 损坏 → 备用武器原位补上`);return}
+ const o=1-i;if(S.weapons[o]){S.curW=o;flashKey='w'+o;toast(`${d.n} 损坏！切换到 ${DEF[S.weapons[o].id].ic}${DEF[S.weapons[o].id].n}`,'warn');log(`${d.n} 损坏 → 切到另一把`);return}
+ S.curW=2;flashKey='w2';toast(`${d.n} 损坏！切换为 👊拳头`,'warn');log(`${d.n} 损坏 → 拳头`);
+}
+
+/* ---------- 武器 ---------- */
+function selectW(i){
+ if(i<2&&!S.weapons[i]){toast(`武器栏${i+1} 为空`,'info');return}
+ if(S.curW===i)return;
+ S.curW=i;cancelUse('切换武器');toast(`切换为 ${DEF[curId()].ic}${DEF[curId()].n}`,'info');refresh();
+}
+function cycleW(){const o=[0,1,2].filter(i=>i===2||S.weapons[i]);selectW(o[(o.indexOf(S.curW)+1)%o.length])}
+
+/* ---------- 快捷道具：推荐 / 拦截 / 读条 ---------- */
+function bestHeal(){const miss=S.hpMax-S.hp;if(miss>=45&&S.cons.potionL)return 'potionL';if(S.cons.potionS)return 'potionS';if(S.cons.potionL)return 'potionL';return null}
+function recommend(){
+ if(S.hp/S.hpMax<.4){const h=bestHeal();if(h)return {id:h,msg:`点击使用 ${DEF[h].n}，恢复 ${DEF[h].heal} 生命`}}
+ if(S.st<20&&S.cons.energy)return {id:'energy',msg:'点击使用 能量饮料，体力回满'};
+ return null;
+}
+function blockReason(id){
+ const d=DEF[id];
+ if(S.cons[id]<=0)return `${d.n} 数量为 0`;
+ if(d.heal&&S.hp>=S.hpMax)return '生命值已满，无需使用该道具';
+ if(d.sta&&S.st>=S.stMax)return '体力已满，无需使用该道具';
+ if(d.spd&&S.spdT>0)return '加速中，无需重复使用';
+ return null;
+}
+function startUse(id){
+ if(S.use){if(S.use.id===id){cancelUse('再次点击');return}cancelUse('换用其他道具')}
+ const r=blockReason(id);if(r){toast(r,'warn');return}
+ const d=DEF[id];S.use={id,t:0,T:d.t};S.quick=id;log(`开始使用 ${d.n}（${d.t}s）`);refresh();
+}
+function finishUse(){
+ const id=S.use.id,d=DEF[id];S.use=null;S.cons[id]--;
+ if(d.heal){const v=Math.min(d.heal,S.hpMax-S.hp);S.hp+=v;floatTxt(S.x,S.y-50,'+'+v,'#3ccf6e');burst(S.x,S.y,'#7cf29c',14)}
+ if(d.sta){S.st=S.stMax;burst(S.x,S.y,'#7fd1ff',14)}
+ if(d.spd){S.spdT=d.spd;burst(S.x,S.y,'#ff9ad5',14);floatTxt(S.x,S.y-50,'加速！','#ff9ad5')}
+ toast(`${d.ic}${d.n} 使用完成（剩 ${S.cons[id]}）`,'ok');log(`使用完成 ${d.n}`);
+ if(!S.cons[id]){const n=CONS.find(c=>S.cons[c]);if(n){S.quick=n;toast(`${d.n} 用完，快捷键自动换成 ${DEF[n].n}`,'info')}}
+ refresh();
+}
+function cancelUse(why){if(!S.use)return;toast(`已取消使用 ${DEF[S.use.id].n}（${why}）`,'info');log(`取消使用（${why}）`);S.use=null;refresh()}
+function quickTap(){const r=recommend();startUse(r?r.id:S.quick)}
+
+/* ---------- 道具键（可使用的战利品） ---------- */
+function useGadget(){
+ const g=usables()[0];if(!g){toast('没有可使用的道具','warn');return}
+ S.bag.splice(S.bag.indexOf(g),1);
+ const tx=S.x+S.fx*150,ty=S.y+S.fy*150;S.parts.push({x:tx,y:ty,ring:1,t:.5,T:.5,R:100,c:'#ff9a3c'});burst(tx,ty,'#ffb36b',22,200);floatTxt(tx,ty-30,'啪！','#ffb36b');
+ S.mons.forEach(m=>{if(Math.hypot(m.x-tx,m.y-ty)<100+m.r){m.stun=1.5;hit(m,6,30,(m.x-tx)/100,(m.y-ty)/100)}});
+ toast(`扔出 🧨摔炮（少带出 ${fmt(DEF.popper.val)}）`,'info');log('使用道具 摔炮');refresh();
+}
+
+/* ---------- 轮盘 ---------- */
+function openWheel(type,ox,oy){
+ let items;
+ if(type==='cons')items=CONS.map(id=>({key:id,ic:DEF[id].ic,n:DEF[id].n,sub:`${S.cons[id]}/${CONS_MAX}`,zero:!S.cons[id],cur:S.quick===id}));
+ else{items=[0,1].map(i=>S.weapons[i]?{key:'w'+i,ic:DEF[S.weapons[i].id].ic,n:DEF[S.weapons[i].id].n,sub:`栏${i+1} · ${S.weapons[i].dur}/${DEF[S.weapons[i].id].dur}`,cur:S.curW===i}:{key:'w'+i,ic:'·',n:'空',sub:`栏${i+1}`,zero:1});
+  items.push({key:'w2',ic:'👊',n:'拳头',sub:'锁定',cur:S.curW===2});
+  bagWeap().slice(0,3).forEach(e=>items.push({key:'b'+e.uid,ic:DEF[e.id].ic,n:DEF[e.id].n,sub:'背包备用',uid:e.uid}))}
+ S.wheel={type,items,ox,oy,sel:-1};
+ const n=items.length,R=104;
+ $('#wItems').innerHTML=items.map((it,i)=>{const a=-Math.PI/2+i*2*Math.PI/n;return `<div class="it ${it.zero?'zero':''} ${it.cur?'cur':''}" data-i="${i}" style="left:${Math.cos(a)*R}px;top:${Math.sin(a)*R}px">${it.ic}<span>${it.sub}</span></div>`}).join('');
+ $('#wTip').textContent=type==='cons'?'拖向道具后松手 = 立即使用；拖回中间松手 = 取消':'拖向武器后松手 = 切换；选背包备用 = 换到当前格';
+ wheelSel(-1);$('#wheel').classList.add('on');
+}
+function wheelMove(x,y){if(!S.wheel)return;const dx=x-S.wheel.ox,dy=y-S.wheel.oy;if(Math.hypot(dx,dy)<24)return wheelSel(-1);const n=S.wheel.items.length;let a=Math.atan2(dy,dx)+Math.PI/2;if(a<0)a+=2*Math.PI;wheelSel(Math.round(a/(2*Math.PI/n))%n)}
+function wheelSel(i){S.wheel.sel=i;document.querySelectorAll('#wItems .it').forEach((e,k)=>e.classList.toggle('on',k===i));const it=S.wheel.items[i];
+ $('#wCtr').innerHTML=it?`${it.ic} ${it.n}<small>${it.sub}</small>`:`<small>${S.wheel.type==='cons'?'快捷道具':'武器'}</small>${S.wheel.type==='cons'?DEF[S.quick].n:DEF[curId()].n}<small>松手取消</small>`}
+function closeWheel(apply){
+ const w=S.wheel;S.wheel=null;$('#wheel').classList.remove('on');if(!w||!apply)return;
+ const it=w.items[w.sel];if(!it){toast('已取消','info');return}
+ if(w.type==='cons'){if(it.zero){toast(`${it.n} 数量为 0`,'warn');return}S.quick=it.key;startUse(it.key);return}
+ if(it.key==='w2')return selectW(2);
+ if(it.key[0]==='w'){if(it.zero)return toast('该栏为空','info');return selectW(+it.key[1])}
+ const e=S.bag.find(x=>x.uid===it.uid);if(!e)return;const slot=S.curW<2?S.curW:(S.weapons[0]?(S.weapons[1]?0:1):0);
+ const old=S.weapons[slot];S.bag.splice(S.bag.indexOf(e),1);S.weapons[slot]=e;if(old)S.bag.push(old);S.curW=slot;flashKey='w'+slot;
+ toast(`${DEF[e.id].ic}${DEF[e.id].n} 换到武器栏${slot+1}${old?`，${DEF[old.id].n} 放回背包`:''}`,'ok');refresh();
+}
+
+/* ---------- 动作 ---------- */
+function nearest(r){let b=null,bd=r;S.mons.forEach(m=>{const d=Math.hypot(m.x-S.x,m.y-S.y);if(d<bd){bd=d;b=m}});return b}
+function attack(){
+ if(S.atkCd>0||S.over)return;if(S.use)cancelUse('攻击打断');
+ const w=cur(),id=curId(),d=DEF[id];S.atkCd=d.cd;press('#bMain');
+ const t=nearest(d.rng+80);if(t){const l=Math.hypot(t.x-S.x,t.y-S.y)||1;S.fx=(t.x-S.x)/l;S.fy=(t.y-S.y)/l}
+ if(d.ranged){S.projs.push({x:S.x+S.fx*30,y:S.y+S.fy*30,vx:S.fx*660,vy:S.fy*660,life:d.rng/660,dmg:d.dmg,kb:d.kb,c:d.pc})}
+ else{S.swing={t:.18,T:.18,id,side:S.punch};if(id==='fist')S.punch*=-1;
+  S.mons.forEach(m=>{const dx=m.x-S.x,dy=m.y-S.y,ds=Math.hypot(dx,dy)||1;if(ds<d.rng+m.r&&(dx*S.fx+dy*S.fy)/ds>.35)hit(m,d.dmg,d.kb,dx/ds,dy/ds)})}
+ if(w){w.dur--;if(w.dur<=0)weaponBreak()}
+ refresh();
+}
+function skill(){
+ if(S.cd.skill>0||S.over){if(S.cd.skill>0)toast(`技能冷却 ${Math.ceil(S.cd.skill)}s`,'warn');return}
+ S.cd.skill=S.CD.skill;press('#bSkill');
+ S.parts.push({x:S.x,y:S.y,ring:1,t:.45,T:.45,R:110,c:'#ffd166'});burst(S.x,S.y,'#ffe7a8',20,220);floatTxt(S.x,S.y-60,'兔兔蹬地！','#ffd166');
+ S.mons.forEach(m=>{const dx=m.x-S.x,dy=m.y-S.y,ds=Math.hypot(dx,dy)||1;if(ds<110+m.r){hit(m,12,70,dx/ds,dy/ds);m.stun=1}});
+}
+function dash(){
+ if(S.cd.dash>0||S.over){if(S.cd.dash>0)toast(`冲刺冷却 ${Math.ceil(S.cd.dash)}s`,'warn');return}
+ if(S.st<15){toast('体力不足','warn');return}
+ if(S.use)cancelUse('冲刺打断');
+ S.cd.dash=S.CD.dash;S.st-=15;S.dashT=.16;S.dvx=S.fx*950;S.dvy=S.fy*950;press('#bDash');
+}
+function jump(){if(S.z>0||S.cd.jump>0||S.over)return;S.cd.jump=S.CD.jump;S.vz=520;press('#bJump')}
+function hit(m,dmg,kb,nx,ny){
+ m.hp-=dmg;m.hitT=.15;m.vx+=nx*kb*8;m.vy+=ny*kb*8;floatTxt(m.x,m.y-36,'-'+dmg,'#ffdf6b');
+ if(m.hp<=0){S.mons.splice(S.mons.indexOf(m),1);S.kills++;
+  for(let i=0;i<16;i++)S.parts.push({x:m.x,y:m.y,vx:(Math.random()-.5)*160,vy:(Math.random()-.5)*160,t:.7,T:.7,r:10+Math.random()*12,c:'#cfcfcf'});
+  const pool=['potionS','potionS','energy','candy','potionL','knife','brick','book','duck','camera','trophy','watch','popper'];
+  const id=pool[Math.floor(Math.random()*pool.length)];S.ground.push({id,x:m.x,y:m.y,dur:DEF[id].dur,lock:0});log(`击倒${m.nm}，掉落 ${DEF[id].n}`);S.respawn=3}
+}
+function press(s){const e=$(s);e.classList.add('press');setTimeout(()=>e.classList.remove('press'),110)}
+const nearBox=()=>S.boxes.find(b=>Math.hypot(b.x-S.x,b.y-S.y)<75);
+
+/* ---------- HUD ---------- */
+function catTag(d){return `<span class="cat" style="background:${CATC[d.cat]}">${CATI[d.cat]}</span>`}
+function refresh(){
+ // 武器栏
+ let h='';
+ for(let i=0;i<3;i++){
+  if(i<2&&!S.weapons[i]){h+=`<div class="wc emp" data-w="${i}">武器栏${i+1} · 空</div>`;continue}
+  const e=i<2?S.weapons[i]:null,d=DEF[e?e.id:'fist'],p=e?e.dur/d.dur:1;
+  h+=`<div class="wc ${S.curW===i?'sel':''} ${flashKey==='w'+i?'flash':''}" data-w="${i}"><span class="ic">${d.ic}</span><div><div class="nm">${d.n}</div><div class="du ${p<.3?'low':''}">${e?`耐久 ${e.dur}/${d.dur}`:'∞ 不会坏'}</div></div><span class="k">${i+1}</span>${e?`<span class="dbar"><i style="width:${p*100}%;background:${p<.3?'#ff5a4e':'#7cf29c'}"></i></span>`:'<span class="lk">🔒</span>'}</div>`;
+ }
+ $('#wbar').innerHTML=h;flashKey=null;
+ // 快捷道具
+ const r=recommend(),qid=r?r.id:S.quick,qd=DEF[qid],qn=S.cons[qid];
+ $('#qk').className='qbtn p'+(qn?'':' zero')+(r&&!S.use?' rec':'');
+ $('#qk').innerHTML=`<span class="k">快捷道具 R · 长按轮盘</span><span class="ic">${qd.ic}</span><span class="n">${qd.n} ${qn}</span><span class="cdm" id="qcdm"></span>`;
+ $('#hint').textContent=r?r.msg:'';$('#hint').classList.toggle('on',!!r&&!S.use&&!S.bagOpen);
+ // 道具键
+ const us=usables();$('#gk').className='qbtn p'+(us.length?'':' zero');
+ $('#gk').innerHTML=`<span class="k">道具 G</span><span class="ic">${us.length?DEF[us[0].id].ic:'🧨'}</span><span class="tagU">可用</span><span class="n">${us.length?DEF[us[0].id].n+' '+us.length:'无'}</span>`;
+ // 主键
+ const id=curId(),d=DEF[id],w=cur();let rp=1,rc='#7cf29c';if(w){rp=w.dur/d.dur;rc=rp<.3?'#ff5a4e':'#7cf29c'}
+ $('#bMain').innerHTML=`<span class="ring" style="background:conic-gradient(${rc} ${rp*360}deg,#0000 0)"></span><span>${d.ic}</span><span class="nm">${d.n}</span><span class="kl">攻击 J</span>`;
+ const tv=totalVal();$('#gainV').textContent=fmt(tv);$('#sVal').textContent=fmt(tv);$('#sSafe').textContent=fmt(S.safe.reduce((a,e)=>a+DEF[e.id].val,0));$('#sKill').textContent=S.kills;
+ if(S.bagOpen)renderBag();
+}
+function tickUI(){
+ $('#hpBar').style.width=S.hp/S.hpMax*100+'%';$('#hpBar').classList.toggle('low',S.hp/S.hpMax<.4);$('#hpTxt').textContent=`生命 ${Math.ceil(S.hp)}/${S.hpMax}`;
+ $('#stBar').style.width=S.st/S.stMax*100+'%';
+ [['#bSkill','skill'],['#bDash','dash'],['#bJump','jump']].forEach(([s,k])=>{const e=$(s),c=S.cd[k],p=c/S.CD[k];
+  e.querySelector('.cdm').style.background=c>0?`conic-gradient(#000c ${p*360}deg,#0000 0)`:'';e.querySelector('.cdn').textContent=c>0&&k!=='jump'?Math.ceil(c):''});
+ if(S.use){$('#prog').classList.add('on');$('#progN').textContent=DEF[S.use.id].n;$('#progT').textContent=Math.max(0,S.use.T-S.use.t).toFixed(1)+'s';$('#progB').style.width=(S.use.t/S.use.T*100)+'%';
+  const c=$('#qcdm');if(c)c.style.background=`conic-gradient(#7cf29c88 ${S.use.t/S.use.T*360}deg,#0000 0)`}
+ else $('#prog').classList.remove('on');
+ const b=nearBox();$('#bSearch').classList.toggle('on',!!b&&!S.bagOpen);if(b)$('#bSearch').textContent=`🔍 搜索 ${b.n}${b.top?'（顶级容器）':''}  F`;
+ const m=Math.floor(S.time/60),s=Math.floor(S.time%60);$('#timer').textContent=`0${m}:${String(s).padStart(2,'0')}`;
+ const k=(recommend()||{}).id||'';if(k!==tickUI.k){tickUI.k=k;refresh()}
+}
+
+/* ---------- 背包（双栏） ---------- */
+function openBag(box){S.bagOpen=true;S.sel=null;S.box=box||nearBox()||null;if(S.wheel)closeWheel(false);$('#bag').classList.add('on');renderBag();refresh()}
+function closeBag(){S.bagOpen=false;S.box=null;S.sel=null;$('#bag').classList.remove('on');refresh()}
+function cellHTML(e,src,i,extra=''){
+ const d=DEF[e.id],pk=S.sel&&S.sel.src===src&&S.sel.i===i?'pick':'';
+ let inner=`${catTag(d)}<span class="ic">${d.ic}</span>`;
+ if(d.cat==='weapon')inner+=`<span class="dbar"><i style="width:${e.dur/d.dur*100}%;background:${e.dur/d.dur<.3?'#ff5a4e':'#7cf29c'}"></i></span>`+(src==='bag'?'<span class="bk">备用</span>':'');
+ else inner+=`<span class="vl">${kv(d.val)}</span>`;
+ if(d.usable)inner+='<span class="use">可用</span>';
+ return `<div class="cell q${q(d.val)} ${pk}" data-src="${src}" data-i="${i}" ${extra}>${inner}</div>`;
+}
+function renderBag(){
+ const tv=totalVal();
+ let h=`<div class="bhead"><span class="tab">背包</span><span class="tab g">健康</span><span style="color:#8d96aa;font-size:12px">点物品 = 详情 + 放入菜单 ｜ 双击 = 按规则自动放好</span><span class="x" data-a="close">✕</span></div><div class="bbody">`;
+ // 左：个人物资
+ h+=`<div class="pn me"><div class="ph">个人物资<span class="r">背包 ${S.bag.length}/${BAGCAP}</span></div><div class="mecols"><div class="colA">`;
+ h+=`<div class="card2"><div class="lb">本局收获</div><div class="gainBig">◎ ${fmt(tv)}</div></div>`;
+ h+=`<div class="card2"><div class="lb"><span>🔒 安全箱 ${S.safe.length}/${SAFE_N}</span></div><div class="safeBox">${[0,1].map(i=>S.safe[i]?cellHTML(S.safe[i],'safe',i):'<div class="cell emp"></div>').join('')}</div><div style="font-size:11px;color:#8d96aa;margin-top:5px;line-height:1.5">被击倒也会保留<br>价值 ≥${fmt(SAFE_TH)} 的战利品优先放入<br>武器不能放入</div></div>`;
+ h+=`</div><div class="colB">`;
+ h+=`<div class="secT">⚔ 武器<em>2 格 + 拳头（锁定）</em></div><div style="display:flex;gap:6px">`;
+ for(let i=0;i<3;i++){
+  if(i<2&&!S.weapons[i]){h+=`<div class="wcard emp">武器栏${i+1} 空</div>`;continue}
+  const e=i<2?S.weapons[i]:null,d=DEF[e?e.id:'fist'],pk=S.sel&&S.sel.src==='w'&&S.sel.i===i?'pick':'';
+  h+=`<div class="wcard ${S.curW===i?'sel':''} ${pk}" data-src="w" data-i="${i}"><span class="cat">⚔</span><span class="ic">${d.ic}</span><div class="t"><b>${d.n}</b><br>${e?`耐久 ${e.dur}/${d.dur}`:'不会坏'}<br><span style="color:#ffd166">${e?kv(d.val):''}</span></div>${e?'':'<span class="lk">🔒</span>'}</div>`;
+ }
+ h+=`</div><div class="secT">✚ 消耗品袋<em>每种固定一格 · 上限 ${CONS_MAX} · 快捷道具和轮盘从这里取</em></div><div class="grid" style="grid-template-columns:repeat(4,62px)">`;
+ CONS.forEach(c=>{const d=DEF[c],n=S.cons[c],pk=S.sel&&S.sel.src==='c'&&S.sel.i===c?'pick':'';h+=`<div class="cell ${n?'':'zero'} ${pk}" data-src="c" data-i="${c}">${catTag(d)}<span class="ic">${d.ic}</span><span class="ct">${n}/${CONS_MAX}</span>${S.quick===c?'<span class="use" style="background:#4aa8ff">快捷</span>':''}</div>`});
+ h+=`</div><div class="secT">🎒 背包<em>${S.bag.length}/${BAGCAP} · 战利品 + 备用武器 · 按价值排序</em></div><div class="grid" style="grid-template-columns:repeat(5,62px)">`;
+ const sorted=S.bag.map((e,i)=>({e,i})).sort((a,b)=>DEF[b.e.id].val-DEF[a.e.id].val);
+ for(let k=0;k<BAGCAP;k++)h+=sorted[k]?cellHTML(sorted[k].e,'bag',sorted[k].i):'<div class="cell emp"></div>';
+ h+=`</div><div class="card2" style="font-size:11px;color:#9aa3b8;line-height:1.7;margin-top:2px"><b style="color:#cfd6e4">自动放置规则</b><br>⚔ 武器 → 空武器栏（手持拳头时自动装备）→ 背包备用<br>✚ 消耗品 → 消耗品袋对应格（满 ${CONS_MAX} 不捡）<br>$ 战利品 ≥${fmt(SAFE_TH)} → 🔒安全箱（满了换掉最便宜的）→ 背包 → 背包满时替换最便宜的<br>$ 可使用的战利品（道具）→ 背包，道具键直接使用</div></div></div></div>`;
+ // 右：搜索
+ const b=S.box;
+ h+=`<div class="pn box"><div class="ph">${b?`🔍 正在搜索：${b.n}${b.top?' · 顶级容器':''}`:'附近'}<span class="r">${b?`${b.items.filter(x=>x.rev).length}/${b.items.length}`:''}</span></div><div class="searchBar">`;
+ if(!b)h+=`<div class="empty">附近没有可搜索的容器<br>靠近 🗄储物柜 / 🎁神秘礼盒 后按 F 或点"搜索"</div>`;
+ else{
+  const nextIdx=b.items.findIndex(x=>!x.rev);
+  h+=`<div class="grid" style="grid-template-columns:repeat(4,62px)">`;
+  b.items.forEach((x,i)=>{h+=x.rev?cellHTML(x.e,'box',i):`<div class="cell ${i===nextIdx?'searching':'unk'}">${i===nextIdx?'':'?'}</div>`});
+  h+=`</div><div style="font-size:12px;color:#8d96aa">${nextIdx>=0?'搜索中…品质越高，搜出来越慢':'已搜完'}</div>`;
+  h+=`<div style="display:flex;gap:6px"><button class="btn2 y" data-a="takeAll">全部拾取（按规则自动放好）</button></div>`;
+ }
+ h+=`</div></div></div><div class="bfoot"><span>本局收获 <b>${fmt(tv)}</b></span><span>🔒安全箱保值 <b>${fmt(S.safe.reduce((a,e)=>a+DEF[e.id].val,0))}</b></span><span>Demo 中打开背包会暂停战斗，实机不暂停</span></div>`;
+ h+=detailHTML();
+ $('#bag').innerHTML=h;
+}
+function selItem(){const s=S.sel;if(!s)return null;
+ if(s.src==='w')return s.i===2?{e:null,id:'fist'}:S.weapons[s.i]?{e:S.weapons[s.i],id:S.weapons[s.i].id}:null;
+ if(s.src==='c')return {e:null,id:s.i};
+ if(s.src==='safe')return S.safe[s.i]?{e:S.safe[s.i],id:S.safe[s.i].id}:null;
+ if(s.src==='bag')return S.bag[s.i]?{e:S.bag[s.i],id:S.bag[s.i].id}:null;
+ if(s.src==='box'){const x=S.box&&S.box.items[s.i];return x&&x.rev?{e:x.e,id:x.e.id}:null}}
+function targets(o){
+ const d=DEF[o.id],src=S.sel.src,t=[];
+ if(d.cat==='weapon'){if(o.id==='fist')return t;t.push(['w0','⚔','武器栏1',src==='w'&&S.sel.i===0?'当前位置':null],['w1','⚔','武器栏2',src==='w'&&S.sel.i===1?'当前位置':null],['bag','🎒','背包',src==='bag'?'当前位置':(S.bag.length>=BAGCAP?'背包已满':null)],['safe','🔒','安全箱','武器不能放入'])}
+ else if(d.cat==='consumable'){if(src==='box')t.push(['cons','✚','消耗品袋',S.cons[o.id]>=CONS_MAX?'已满':null])}
+ else t.push(['bag','🎒','背包',src==='bag'?'当前位置':(S.bag.length>=BAGCAP?'背包已满':null)],['safe','🔒','安全箱',src==='safe'?'当前位置':(S.safe.length>=SAFE_N?'满了（会替换最便宜的）':null)]);
+ return t;
+}
+function detailHTML(){
+ const o=selItem();if(!o)return '';
+ const d=DEF[o.id],cnt=d.cat==='consumable'?S.cons[o.id]:null;
+ const canUse=d.cat==='consumable'?!blockReason(o.id):!!d.usable;
+ const where={w:'武器栏',c:'消耗品袋',safe:'安全箱',bag:'背包',box:S.box?S.box.n:''}[S.sel.src];
+ let h=`<div id="detail" class="on"><div class="dh"><span style="color:${CATC[d.cat]}">${CATI[d.cat]}</span>${d.n}${cnt!=null?` ×${cnt}`:''}<span class="x" data-a="unsel">✕</span></div>`;
+ h+=`<div class="art"><span class="vv">◎ ${fmt(d.val)}</span>${d.ic}</div>`;
+ h+=`<div class="row2"><button data-a="drop" ${o.id==='fist'||S.sel.src==='box'?'disabled':''}>🗑 丢弃</button><button class="use" data-a="use" ${canUse?'':'disabled'}>${d.cat==='weapon'?'✋ 手持':'▶ 使用'}</button></div>`;
+ h+=`<div class="info"><div class="tags" style="margin-bottom:4px"><span style="background:${CATC[d.cat]}">${CATN[d.cat]}</span>${d.usable?'<span style="background:#2fbf63">可使用（道具）</span>':''}${d.cat!=='consumable'&&o.id!=='fist'?`<span style="background:${['','#5ad17a','#4aa8ff','#b26bff','#e0a400'][q(d.val)]}">${['','绿','蓝','紫','金'][q(d.val)]}色品质</span>`:''}</div>`;
+ h+=`<div class="ln"><span>位置</span><span>${where}</span></div>`;
+ if(d.dmg)h+=`<div class="ln"><span>伤害 / 类型</span><span>${d.dmg} · ${d.ranged?'远程':'近战'}</span></div><div class="ln"><span>耐久</span><span>${o.e?o.e.dur+'/'+d.dur:'∞'}</span></div>`;
+ if(d.t)h+=`<div class="ln"><span>使用时间</span><span>${d.t} 秒</span></div>`;
+ if(d.cat==='consumable')h+=`<div class="ln"><span>携带</span><span>${cnt}/${CONS_MAX}</span></div>`;
+ if(d.cat==='consumable'&&blockReason(o.id))h+=`<div style="color:#ffb4a8">${blockReason(o.id)}</div>`;
+ h+=`<div style="margin-top:4px">${d.desc}</div></div></div>`;
+ const ts=targets(o);
+ if(ts.length){h+=`<div id="putMenu" class="on"><div class="h">放入</div>`+ts.map(([k,ic,n,dis])=>`<button data-a="put" data-t="${k}" ${dis&&!/替换/.test(dis)?'disabled':''} title="${dis||''}"><b>${ic}</b>${n}${dis?`<span style="font-size:9px;color:#ffb4a8">${dis}</span>`:''}</button>`).join('')+(S.sel.src!=='box'&&o.id!=='fist'?`<button data-a="drop"><b>🗑</b>丢弃</button>`:'')+`</div>`}
+ return h;
+}
+function takeOut(){ // 从来源移除，返回物品实体
+ const s=S.sel,o=selItem();
+ if(s.src==='w'){S.weapons[s.i]=null;if(S.curW===s.i){S.curW=S.weapons[1-s.i]?1-s.i:2}}
+ else if(s.src==='safe')S.safe.splice(s.i,1);
+ else if(s.src==='bag')S.bag.splice(s.i,1);
+ else if(s.src==='box')S.box.items.splice(s.i,1);
+ return o.e;
+}
+function putTo(t){
+ const o=selItem();if(!o)return;const d=DEF[o.id];
+ if(d.cat==='consumable'){ // 只可能从容器放入消耗品袋
+  if(S.cons[o.id]>=CONS_MAX)return toast('已满','warn');S.box.items.splice(S.sel.i,1);S.cons[o.id]++;toast(`+1 ${d.ic}${d.n} → 消耗品袋`,'ok');S.sel=null;return;
+ }
+ if(t==='w0'||t==='w1'){const i=+t[1];const e=takeOut();const old=S.weapons[i];S.weapons[i]=e;
+  if(old){if(S.bag.length<BAGCAP)S.bag.push(old);else S.ground.push({id:old.id,x:S.x+30,y:S.y,dur:old.dur,lock:1})}
+  if(S.curW===2)S.curW=i;toast(`${d.ic}${d.n} → 武器栏${i+1}${old?`，${DEF[old.id].n} 放回背包`:''}`,'ok');S.sel={src:'w',i};return}
+ if(t==='bag'){if(S.bag.length>=BAGCAP)return toast('背包已满','warn');const e=takeOut();S.bag.push(e);toast(`${d.ic}${d.n} → 背包`,'ok');S.sel=null;return}
+ if(t==='safe'){const e=takeOut();
+  if(S.safe.length>=SAFE_N){const low=S.safe.reduce((a,b)=>DEF[a.id].val<=DEF[b.id].val?a:b);S.safe.splice(S.safe.indexOf(low),1);if(S.bag.length<BAGCAP)S.bag.push(low);else S.ground.push({id:low.id,x:S.x+30,y:S.y,lock:1});toast(`${DEF[low.id].n} 换回背包`,'info')}
+  S.safe.push(e);toast(`${d.ic}${d.n} → 🔒安全箱`,'gold');S.sel=null;return}
+}
+function quickMove(src,i){ // 双击
+ S.sel={src,i};const o=selItem();if(!o)return;const d=DEF[o.id];
+ if(src==='box'){const e=o.e;if(route(e,'box')){S.box.items.splice(i,1)}S.sel=null;return}
+ if(src==='bag'&&d.cat==='weapon')return putTo(S.curW<2?'w'+S.curW:(S.weapons[0]?'w1':'w0'));
+ if(src==='bag'&&d.cat==='loot'&&!d.usable)return putTo('safe');
+ if(src==='safe')return putTo('bag');
+ if(src==='c')return useFromBag(o.id);
+}
+function useFromBag(id){const d=DEF[id];if(d.cat==='consumable'){const r=blockReason(id);if(r)return toast(r,'warn');closeBag();startUse(id)}else if(d.usable){closeBag();useGadget()}}
+let lastClick={k:'',t:0};
+$('#bag').addEventListener('click',ev=>{
+ const a=ev.target.closest('[data-a]');
+ if(a){const act=a.dataset.a,o=selItem();
+  if(act==='close')return closeBag();
+  if(act==='unsel'){S.sel=null;return renderBag()}
+  if(act==='takeAll'){const b=S.box;let n=0;for(let i=b.items.length-1;i>=0;i--){const x=b.items[i];if(x.rev&&route(x.e,'box')){b.items.splice(i,1);n++}}if(!n)toast('没有可拾取的物品','info');S.sel=null;refresh();return renderBag()}
+  if(!o)return;
+  if(act==='put')putTo(a.dataset.t);
+  if(act==='use'){if(DEF[o.id].cat==='weapon'){if(S.sel.src==='w')selectW(S.sel.i);else putTo(S.curW<2?'w'+S.curW:'w0')}else{if(S.sel.src==='box'&&DEF[o.id].cat==='consumable'){putTo('cons');}else return useFromBag(o.id)}}
+  if(act==='drop'){const e=takeOut();if(e)S.ground.push({id:e.id,x:S.x+S.fx*40,y:S.y+S.fy*40,dur:e.dur,lock:1});else if(S.sel.src==='c'&&S.cons[o.id]){S.cons[o.id]--;S.ground.push({id:o.id,x:S.x+S.fx*40,y:S.y+S.fy*40,lock:1})}toast(`丢弃 ${DEF[o.id].n}`,'info');log(`丢弃 ${DEF[o.id].n}`);S.sel=null}
+  refresh();return renderBag();
+ }
+ const c=ev.target.closest('[data-src]');if(!c)return;
+ const src=c.dataset.src,i=src==='c'?c.dataset.i:+c.dataset.i,k=src+':'+i,now=performance.now();
+ if(lastClick.k===k&&now-lastClick.t<350){lastClick={k:'',t:0};quickMove(src,i);refresh();return S.bagOpen&&renderBag()}
+ lastClick={k,t:now};S.sel={src,i};renderBag();
+});
+function searchTick(dt){const b=S.box;if(!b)return;const x=b.items.find(y=>!y.rev);if(!x)return;b.prog+=dt;const need=.35+.3*q(DEF[x.e.id].val);if(b.prog>=need){b.prog=0;x.rev=true;if(q(DEF[x.e.id].val)>=4)toast(`搜到金色品质：${DEF[x.e.id].ic}${DEF[x.e.id].n}！`,'gold');renderBag()}}
+
+/* ---------- 结算 ---------- */
+function settle(win){
+ S.over=true;S.use=null;const rows=[];let keep=0,lost=0;
+ const add=(e,ok,where)=>{const d=DEF[e.id];rows.push(`<tr><td>${d.ic} ${d.n}</td><td style="color:#99a">${where}</td><td class="${ok?'':'lost'}">${fmt(d.val)}</td></tr>`);ok?keep+=d.val:lost+=d.val};
+ S.safe.forEach(e=>add(e,true,'🔒安全箱'));
+ S.weapons.forEach(w=>w&&add(w,win,'武器栏'));S.bag.forEach(e=>add(e,win,'背包'));
+ CONS.forEach(c=>{if(S.cons[c]){const v=DEF[c].val*S.cons[c];rows.push(`<tr><td>${DEF[c].ic} ${DEF[c].n} ×${S.cons[c]}</td><td style="color:#99a">消耗品袋</td><td class="${win?'':'lost'}">${v}</td></tr>`);win?keep+=v:lost+=v}});
+ $('#settle').innerHTML=`<div class="settleBox"><h3>${win?'🚁 成功撤离':'☠ 被击倒了'}</h3><div style="color:#aab">${win?'全部物资都带了出来':'只有 🔒安全箱里的物品被保留'}</div>
+ <div style="max-height:330px;overflow:auto"><table>${rows.join('')}</table></div>
+ <div style="font-size:18px">带出 <b style="color:#7cf29c">${fmt(keep)}</b>${win?'':`　损失 <b style="color:#ff8a80">${fmt(lost)}</b>`}</div>
+ <button id="again">再来一局</button></div>`;
+ $('#settle').classList.add('on');$('#again').onclick=reset;log(win?'成功撤离':'被击倒结算');
+}
+
+/* ---------- 输入 ---------- */
+function toStage(cx,cy){const r=stage.getBoundingClientRect();return {x:(cx-r.left)/SC,y:(cy-r.top)/SC}}
+const keys={};let joy={id:null,ox:0,oy:0,dx:0,dy:0},mouse={x:640,y:360};
+cv.addEventListener('pointerdown',ev=>{const p=toStage(ev.clientX,ev.clientY);if(p.x<640&&p.y>260){joy.id=ev.pointerId;joy.ox=p.x;joy.oy=p.y;cv.setPointerCapture(ev.pointerId);$('#joy').style.left=(p.x-75)+'px';$('#joy').style.top=(p.y-75)+'px'}});
+cv.addEventListener('pointermove',ev=>{if(ev.pointerId!==joy.id)return;const p=toStage(ev.clientX,ev.clientY);let dx=p.x-joy.ox,dy=p.y-joy.oy,l=Math.hypot(dx,dy);if(l>55){dx*=55/l;dy*=55/l}joy.dx=dx/55;joy.dy=dy/55;$('#knob').style.transform=`translate(${dx}px,${dy}px)`});
+const jEnd=ev=>{if(ev.pointerId!==joy.id)return;joy.id=null;joy.dx=joy.dy=0;$('#knob').style.transform='';$('#joy').style.left='80px';$('#joy').style.top='380px'};
+cv.addEventListener('pointerup',jEnd);cv.addEventListener('pointercancel',jEnd);
+addEventListener('pointermove',ev=>{const p=toStage(ev.clientX,ev.clientY);mouse=p;if(S&&S.wheel&&S.wheel.ptr!=null)wheelMove(p.x,p.y);else if(S&&S.wheel&&S.wheel.kb)wheelMove(p.x,p.y)});
+const tap=(s,f)=>$(s).addEventListener('pointerdown',ev=>{ev.preventDefault();ev.stopPropagation();if(!S.bagOpen&&!S.over)f()});
+tap('#bMain',attack);tap('#bSkill',skill);tap('#bDash',dash);tap('#bJump',jump);tap('#gk',useGadget);tap('#bagBtn',()=>openBag());tap('#bSearch',()=>openBag(nearBox()));
+$('#progX').addEventListener('pointerdown',ev=>{ev.stopPropagation();cancelUse('点击取消')});
+// 长按：快捷道具键 / 武器栏
+function longPress(el,type,onTap){
+ let timer=null,origin=null,pid=null,tgt=null;
+ el.addEventListener('pointerdown',ev=>{if(S.bagOpen||S.over)return;ev.preventDefault();ev.stopPropagation();pid=ev.pointerId;el.setPointerCapture(pid);origin=toStage(ev.clientX,ev.clientY);tgt=ev.target;
+  timer=setTimeout(()=>{timer=null;openWheel(type,origin.x,origin.y);S.wheel.ptr=pid},LONG)});
+ el.addEventListener('pointermove',ev=>{if(ev.pointerId!==pid)return;const p=toStage(ev.clientX,ev.clientY);if(timer&&Math.hypot(p.x-origin.x,p.y-origin.y)>18){clearTimeout(timer);timer=null;openWheel(type,origin.x,origin.y);S.wheel.ptr=pid}if(S.wheel)wheelMove(p.x,p.y)});
+ const end=ev=>{if(ev.pointerId!==pid)return;pid=null;if(timer){clearTimeout(timer);timer=null;onTap(tgt)}else if(S.wheel)closeWheel(ev.type==='pointerup')};
+ el.addEventListener('pointerup',end);el.addEventListener('pointercancel',end);
+}
+longPress($('#qk'),'cons',()=>quickTap());
+longPress($('#wbar'),'weap',t=>{const w=t&&t.closest('[data-w]');if(w)selectW(+w.dataset.w)});
+let kbHold={};
+addEventListener('keydown',ev=>{
+ const k=ev.key.length===1?ev.key.toLowerCase():ev.key;
+ if(['w','a','s','d',' ','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(k))ev.preventDefault();
+ keys[k]=true;if(ev.repeat)return;
+ if(k==='Escape'){if(S.wheel)return closeWheel(false);if(S.bagOpen)closeBag();return}
+ if(S.over)return;
+ if(k==='b')return S.bagOpen?closeBag():openBag();
+ if(S.bagOpen)return;
+ if(k==='r'||k==='q'){kbHold[k]=setTimeout(()=>{kbHold[k]=null;openWheel(k==='r'?'cons':'weap',mouse.x,mouse.y);S.wheel.kb=1},LONG);return}
+ if(S.wheel&&/^[1-6]$/.test(k)){wheelSel(+k-1);return closeWheel(true)}
+ if(k==='j')attack();if(k==='e')skill();if(k==='k')dash();if(k===' ')jump();if(k==='g')useGadget();
+ if(k==='f'){const b=nearBox();if(b)openBag(b);else toast('附近没有可搜索的容器','info')}
+ if(/^[1-3]$/.test(k))selectW(+k-1);
+});
+addEventListener('keyup',ev=>{const k=ev.key.length===1?ev.key.toLowerCase():ev.key;keys[k]=false;
+ if((k==='r'||k==='q')&&!S.bagOpen&&!S.over){if(kbHold[k]){clearTimeout(kbHold[k]);kbHold[k]=null;k==='r'?quickTap():cycleW()}else if(S.wheel)closeWheel(true)}});
+addEventListener('blur',()=>{for(const k in keys)keys[k]=false});
+$('#dReset').onclick=reset;
+$('#dHurt').onclick=()=>{S.hp=Math.max(1,S.hp-45);floatTxt(S.x,S.y-50,'-45','#ff6b5b');log('调试：受伤 -45');refresh()};
+$('#dBreak').onclick=()=>{if(!cur()){S.weapons[0]=S.weapons[0]||mk('knife');S.curW=0}cur().dur=1;toast(`${DEF[curId()].n} 耐久=1，再攻击一次就坏`,'info');refresh()};
+$('#dSpawn').onclick=()=>spawnMon();
+$('#dLoot').onclick=()=>{['gem','watch','trophy','camera','book','duck','popper'].forEach((id,i)=>S.ground.push({id,x:S.x+Math.cos(i)*80,y:S.y+Math.sin(i)*80,lock:0}));toast('附近刷出 7 件战利品，走过去捡','info')};
+$('#dBox').onclick=()=>{const b=S.boxes.find(x=>x.top);S.x=b.x;S.y=b.y+60;toast('已到 🎁神秘礼盒 旁边，按 F 搜索','info')};
+$('#dDie').onclick=()=>settle(false);$('#dExit').onclick=()=>settle(true);
+$('#g1').onclick=()=>{S.hp=S.hpMax;S.quick='potionS';refresh();quickTap()};
+$('#g3').onclick=()=>$('#dHurt').onclick();
+$('#g4').onclick=()=>$('#dBreak').onclick();
+$('#g5').onclick=()=>$('#dBox').onclick();
+
+/* ---------- 循环 ---------- */
+function collide(o,r,air){
+ o.x=Math.max(r,Math.min(W-r,o.x));o.y=Math.max(90+r,Math.min(H-r,o.y));if(air)return;
+ [...OBST,...S.boxes.map(b=>({x:b.x-24,y:b.y-18,w:48,h:36}))].forEach(b=>{const cx=Math.max(b.x,Math.min(o.x,b.x+b.w)),cy=Math.max(b.y,Math.min(o.y,b.y+b.h)),dx=o.x-cx,dy=o.y-cy,d=Math.hypot(dx,dy);
+  if(d<r){if(d===0){o.y=b.y-r}else{o.x=cx+dx/d*r;o.y=cy+dy/d*r}}});
+}
+let last=performance.now(),uiT=0;
+function step(now){const dt=Math.min(.05,(now-last)/1000);last=now;if(!S.bagOpen&&!S.over)update(dt);else if(S.bagOpen)searchTick(dt);draw();uiT+=dt;if(uiT>.1){uiT=0;tickUI()}requestAnimationFrame(step)}
+function update(dt){
+ S.time=Math.max(0,S.time-dt);S.atkCd-=dt;for(const k in S.cd)S.cd[k]=Math.max(0,S.cd[k]-dt);S.spdT=Math.max(0,S.spdT-dt);
+ if(S.use){S.use.t+=dt;if(S.use.t>=S.use.T)finishUse()}
+ if(S.z>0||S.vz>0){S.z+=S.vz*dt;S.vz-=1600*dt;if(S.z<=0){S.z=0;S.vz=0;burst(S.x,S.y+18,'#d9c49c',8,80)}}
+ let mx=(keys.d||keys.ArrowRight?1:0)-(keys.a||keys.ArrowLeft?1:0)+joy.dx,my=(keys.s||keys.ArrowDown?1:0)-(keys.w||keys.ArrowUp?1:0)+joy.dy;const l=Math.hypot(mx,my);
+ if(S.dashT>0){S.dashT-=dt;S.x+=S.dvx*dt;S.y+=S.dvy*dt;S.ghosts.push({x:S.x,y:S.y,z:S.z,t:.25})}
+ else if(l>.1){mx/=Math.max(1,l);my/=Math.max(1,l);let sp=190*(S.spdT>0?1.4:1)*(S.use?.6:1);S.x+=mx*sp*dt;S.y+=my*sp*dt;const n=Math.hypot(mx,my);S.fx=mx/n;S.fy=my/n;S.walk+=dt*10;S.st=Math.max(0,S.st-6*dt)}
+ else S.st=Math.min(S.stMax,S.st+14*dt);
+ collide(S,20,S.z>20);
+ S.ghosts.forEach(g=>g.t-=dt);S.ghosts=S.ghosts.filter(g=>g.t>0);
+ for(let i=S.ground.length-1;i>=0;i--){const g=S.ground[i],d=Math.hypot(g.x-S.x,g.y-S.y);if(g.lock){if(d>60)g.lock=0;continue}
+  if(d<34&&S.z<10){if(route(mk(g.id,g.dur),'ground')){S.ground.splice(i,1);log(`拾取 ${DEF[g.id].n}`);refresh()}else g.lock=1}}
+ S.mons.forEach(m=>{m.hitT-=dt;m.atkCd-=dt;m.x+=m.vx*dt;m.y+=m.vy*dt;m.vx*=.85;m.vy*=.85;
+  if(m.stun>0)m.stun-=dt;else{const dx=S.x-m.x,dy=S.y-m.y,d=Math.hypot(dx,dy);
+   if(d<380&&d>40){m.x+=dx/d*78*dt;m.y+=dy/d*78*dt}
+   if(d<50&&m.atkCd<=0){m.atkCd=1.2;if(S.z>15||S.dashT>0){floatTxt(S.x,S.y-60,'MISS','#9ecbff')}else{S.hp-=8;floatTxt(S.x,S.y-50,'-8','#ff6b5b');
+    if(S.hp<=0){S.hp=0;settle(false)}}}}
+  collide(m,m.r)});
+ if(S.respawn>0){S.respawn-=dt;if(S.respawn<=0&&S.mons.length<3)spawnMon()}
+ S.projs.forEach(p=>{p.x+=p.vx*dt;p.y+=p.vy*dt;p.life-=dt;for(const m of S.mons)if(Math.hypot(m.x-p.x,m.y-p.y)<m.r+10){const l=Math.hypot(p.vx,p.vy);hit(m,p.dmg,p.kb,p.vx/l,p.vy/l);p.life=0;burst(p.x,p.y,p.c,8);break}});
+ S.projs=S.projs.filter(p=>p.life>0);
+ if(S.swing){S.swing.t-=dt;if(S.swing.t<=0)S.swing=null}
+ S.parts.forEach(p=>{p.x+=p.vx*dt||0;p.y+=p.vy*dt||0;p.t-=dt});S.parts=S.parts.filter(p=>p.t>0);
+}
+function emoji(s,x,y,size){ctx.fillStyle='#000';ctx.font=`${size}px "Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(s,x,y)}
+const QC=['','#5ad17a','#4aa8ff','#b26bff','#ffc23d'];
+function draw(){
+ const T=40,t=performance.now()/1000;
+ for(let y=0;y<H;y+=T)for(let x=0;x<W;x+=T){ctx.fillStyle=((x+y)/T)%2?'#e8d6b5':'#efe0c2';ctx.fillRect(x,y,T,T)}
+ ctx.strokeStyle='#d98a8a';ctx.lineWidth=3;[[160,140],[200,140],[180,100]].forEach(([x,y])=>ctx.strokeRect(x,y+40,40,40));
+ OBST.forEach(b=>{ctx.fillStyle='#8a6a4a';ctx.fillRect(b.x,b.y+8,b.w,b.h);ctx.fillStyle='#b48a5e';ctx.fillRect(b.x,b.y,b.w,b.h-8);ctx.fillStyle='#5a4632';ctx.font='bold 13px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(b.n,b.x+b.w/2,b.y+b.h/2-4)});
+ S.boxes.forEach(b=>{const left=b.items.length,near=Math.hypot(b.x-S.x,b.y-S.y)<75;
+  if(b.top){ctx.globalAlpha=.4+.3*Math.sin(t*3);ctx.fillStyle='#ffc23d';ctx.beginPath();ctx.ellipse(b.x,b.y+16,36,14,0,0,7);ctx.fill();ctx.globalAlpha=1}
+  ctx.fillStyle='#0003';ctx.beginPath();ctx.ellipse(b.x,b.y+18,28,9,0,0,7);ctx.fill();emoji(b.top?'🎁':'🗄️',b.x,b.y,44);
+  ctx.font='bold 12px sans-serif';ctx.textAlign='center';ctx.fillStyle='#000a';const lbl=`${b.n}${b.items.some(x=>x.rev)?` · 剩${left}`:''}`;const w=ctx.measureText(lbl).width+12;ctx.fillRect(b.x-w/2,b.y-42,w,18);ctx.fillStyle=b.top?'#ffd166':'#fff';ctx.fillText(lbl,b.x,b.y-33);
+  if(near){ctx.strokeStyle='#ffd166';ctx.lineWidth=2;ctx.setLineDash([5,4]);ctx.beginPath();ctx.arc(b.x,b.y,40,0,7);ctx.stroke();ctx.setLineDash([])}});
+ S.ground.forEach(g=>{const d=DEF[g.id],c=d.cat==='consumable'?CATC.consumable:QC[q(d.val)];
+  ctx.fillStyle='#0002';ctx.beginPath();ctx.ellipse(g.x,g.y+14,20,8,0,0,7);ctx.fill();
+  ctx.strokeStyle=c;ctx.lineWidth=3;ctx.globalAlpha=.55+.45*Math.sin(t*4+g.x);ctx.beginPath();ctx.ellipse(g.x,g.y+14,24,10,0,0,7);ctx.stroke();ctx.globalAlpha=1;
+  emoji(d.ic,g.x,g.y-4+Math.sin(t*3+g.x)*3,30);
+  ctx.fillStyle=CATC[d.cat];ctx.beginPath();ctx.arc(g.x-20,g.y-20,8,0,7);ctx.fill();ctx.fillStyle='#fff';ctx.font='bold 10px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(CATI[d.cat],g.x-20,g.y-20);
+  if(d.usable){ctx.fillStyle='#2fbf63';ctx.fillRect(g.x+6,g.y-28,26,13);ctx.fillStyle='#fff';ctx.font='bold 9px sans-serif';ctx.fillText('可用',g.x+19,g.y-21)}});
+ S.mons.forEach(m=>{ctx.fillStyle='#0003';ctx.beginPath();ctx.ellipse(m.x,m.y+20,22,8,0,0,7);ctx.fill();ctx.save();if(m.hitT>0)ctx.filter='brightness(2)';emoji(m.ic,m.x,m.y+Math.sin(t*6+m.x)*2,44);ctx.restore();
+  if(m.stun>0)emoji('💫',m.x,m.y-34,18);ctx.fillStyle='#0008';ctx.fillRect(m.x-22,m.y-34,44,5);ctx.fillStyle='#ff5a4e';ctx.fillRect(m.x-22,m.y-34,44*Math.max(0,m.hp)/m.max,5)});
+ S.ghosts.forEach(g=>{ctx.globalAlpha=g.t*2;emoji('🐰',g.x,g.y-g.z,46);ctx.globalAlpha=1});
+ const sh=1-Math.min(.5,S.z/200);ctx.fillStyle='#0003';ctx.beginPath();ctx.ellipse(S.x,S.y+20,20*sh,7*sh,0,0,7);ctx.fill();
+ const py=S.y-S.z+(S.z?0:Math.sin(S.walk)*2);emoji('🐰',S.x,py,46);
+ if(S.use){const p=S.use.t/S.use.T;ctx.strokeStyle='#0006';ctx.lineWidth=6;ctx.beginPath();ctx.arc(S.x,py-44,13,0,7);ctx.stroke();ctx.strokeStyle='#7cf29c';ctx.beginPath();ctx.arc(S.x,py-44,13,-Math.PI/2,-Math.PI/2+p*6.283);ctx.stroke();emoji(DEF[S.use.id].ic,S.x,py-44,14)}
+ if(S.swing){const d=DEF[S.swing.id],k=1-S.swing.t/S.swing.T;
+  if(S.swing.id==='fist'){const ox=-S.fy*14*S.swing.side,oy=S.fx*14*S.swing.side,r=20+Math.sin(k*Math.PI)*44;emoji('👊',S.x+ox+S.fx*r,py+oy+S.fy*r,28)}
+  else{const a0=Math.atan2(S.fy,S.fx);ctx.strokeStyle='#fff';ctx.lineWidth=6;ctx.globalAlpha=1-k;ctx.beginPath();ctx.arc(S.x,py,d.rng,a0-1+k*.6,a0+.2+k*.8);ctx.stroke();ctx.globalAlpha=1;const aa=a0-1+k*2;emoji(d.ic,S.x+Math.cos(aa)*40,py+Math.sin(aa)*40,26)}}
+ else if(!S.use)emoji(DEF[curId()].ic,S.x+S.fx*26+12,py+S.fy*10+8,22);
+ S.projs.forEach(p=>{ctx.fillStyle=p.c+'dd';ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.beginPath();ctx.arc(p.x,p.y,8,0,7);ctx.fill();ctx.stroke()});
+ S.parts.forEach(p=>{const a=p.t/p.T;ctx.globalAlpha=a;
+  if(p.ring){ctx.strokeStyle=p.c;ctx.lineWidth=6*a;ctx.beginPath();ctx.arc(p.x,p.y,p.R*(1-a*.7),0,7);ctx.stroke()}
+  else if(p.txt){ctx.fillStyle=p.c;ctx.font='bold 18px sans-serif';ctx.textAlign='center';ctx.strokeStyle='#000';ctx.lineWidth=3;ctx.strokeText(p.txt,p.x,p.y);ctx.fillText(p.txt,p.x,p.y)}
+  else{ctx.fillStyle=p.c;ctx.beginPath();ctx.arc(p.x,p.y,p.r*(.5+a*.5),0,7);ctx.fill()}ctx.globalAlpha=1});
+}
+function fit(){const w=$('#stageWrap'),s=Math.min(w.clientWidth/1280,w.clientHeight/720)*.98;SC=s;stage.style.transform=`scale(${s})`;stage.style.left=(w.clientWidth-1280*s)/2+'px';stage.style.top=(w.clientHeight-720*s)/2+'px'}
+addEventListener('resize',fit);fit();reset();requestAnimationFrame(step);
+window.__S=()=>S;
+</script>
+</body>
+</html>

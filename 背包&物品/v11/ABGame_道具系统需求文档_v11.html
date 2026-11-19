@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ABGame 道具系统 需求文档 v11</title>
+<style>
+:root{--bg:#f5f6fa;--card:#fff;--ink:#1f2330;--sub:#5d6475;--line:#e3e6ee;--brand:#ff9f1c;--w:#ff5a4e;--c:#2fbf63;--l:#f2b01e;--blue:#3d8bfd;--ball:#4aa8ff;
+--q1:#8a8f9e;--q2:#5ad17a;--q3:#4aa8ff;--q4:#b26bff;--q5:#ffc23d;--q6:#ff4d4f}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font:14px/1.75 "Microsoft YaHei","PingFang SC",sans-serif}
+a{color:var(--blue)}
+.wrap{display:flex;max-width:1360px;margin:0 auto}
+nav{position:sticky;top:0;height:100vh;width:230px;flex:none;padding:24px 14px;overflow:auto;border-right:1px solid var(--line);background:#fafbfd}
+nav b{display:block;font-size:13px;color:var(--sub);margin:14px 0 4px}
+nav a{display:block;color:var(--ink);text-decoration:none;font-size:13px;padding:3px 8px;border-radius:6px}
+nav a:hover{background:#eef1f7}
+nav a.s{padding-left:20px;color:var(--sub);font-size:12px}
+main{flex:1;padding:28px 40px 80px;min-width:0}
+.hero{background:linear-gradient(120deg,#2b2f45,#3e3360);color:#fff;border-radius:18px;padding:28px 32px;margin-bottom:26px;position:relative;overflow:hidden}
+.hero h1{font-size:28px}
+.hero p{opacity:.85}
+.hero .meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.hero .meta span{background:#ffffff1f;border-radius:20px;padding:2px 12px;font-size:12px}
+.hero .emo{position:absolute;right:30px;top:18px;font-size:70px;opacity:.9}
+h2{font-size:22px;margin:38px 0 14px;padding-left:12px;border-left:6px solid var(--brand)}
+h2 small{font-size:13px;color:var(--sub);font-weight:normal;margin-left:8px}
+h3{font-size:17px;margin:24px 0 10px}
+h4{font-size:14px;margin:12px 0 6px}
+p{margin:6px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin:12px 0;box-shadow:0 1px 3px #0000000a}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+@media(max-width:1100px){.grid2,.grid3,.grid4{grid-template-columns:1fr}nav{display:none}}
+table{width:100%;border-collapse:collapse;margin:8px 0;font-size:13px;background:#fff}
+th{background:#f0f2f7;text-align:left;font-weight:bold}
+th,td{border:1px solid var(--line);padding:7px 10px;vertical-align:top}
+figure{margin:8px 0}
+figure img{width:100%;border-radius:10px;border:1px solid var(--line);display:block}
+figcaption{font-size:12px;color:var(--sub);text-align:center;margin-top:4px}
+.tag{display:inline-block;border-radius:6px;padding:0 8px;font-size:12px;font-weight:bold;color:#fff;line-height:20px}
+.tw{background:var(--w)}.tc{background:var(--c)}.tl{background:var(--l)}.tb{background:var(--blue)}.tball{background:var(--ball)}.tg{background:#8a90a0}
+.pri-h{background:#e2574c}.pri-m{background:#e09b2d}.pri-l{background:#8a90a0}
+.note{background:#fff8e6;border:1px solid #ffe2a8;border-radius:10px;padding:10px 14px;font-size:13px;color:#7a5a12;margin:10px 0}
+.bad{color:#d9363e;font-weight:bold}.good{color:#1f9d55;font-weight:bold}
+.kbd{display:inline-block;background:#eef0f5;border:1px solid #d5d9e3;border-bottom-width:2px;border-radius:4px;padding:0 5px;font-size:12px;font-family:Consolas,monospace}
+ul.c{padding-left:20px}ul.c li{margin:3px 0}
+.mock{background:#232736;border-radius:12px;padding:16px;color:#e8eaf2;font-size:12px;position:relative}
+.mock .mt{font-size:12px;font-weight:bold;color:#aab3c8;margin-bottom:8px;display:flex;justify-content:space-between}
+.mock .mt i{font-style:normal;background:#ffffff14;padding:0 8px;border-radius:10px;color:#ffd166}
+.cells{display:grid;gap:3px}
+.cell{background:#ffffff10;border:1px solid #ffffff22;border-radius:4px;min-height:26px;display:flex;align-items:center;justify-content:center;font-size:15px;position:relative}
+.cell.f{background:#3a4258}
+.cell.q1{border-color:var(--q1);background:#8a8f9e22}
+.cell.q2{border-color:var(--q2);background:#5ad17a22}
+.cell.q3{border-color:var(--q3);background:#4aa8ff22}
+.cell.q4{border-color:var(--q4);background:#b26bff26}
+.cell.q5{border-color:var(--q5);background:#ffc23d26}
+.cell.q6{border-color:var(--q6);background:#ff4d4f26}
+.zone{border:2px solid;border-radius:10px;padding:8px}
+.zone .zt{font-weight:bold;font-size:12px;margin-bottom:5px;display:flex;justify-content:space-between;gap:6px}
+.zone .zt span{font-weight:normal;opacity:.75}
+.arrow{display:flex;align-items:center;justify-content:center;font-size:22px;color:#8b93a8}
+.flow{display:flex;align-items:stretch;gap:8px;flex-wrap:wrap}
+.node{background:#fff;border:2px solid var(--line);border-radius:10px;padding:8px 12px;font-size:12px;text-align:center;min-width:110px;display:flex;flex-direction:column;justify-content:center}
+.node b{font-size:13px}
+.node.dia{border-color:#e09b2d;background:#fff8ec}
+.node.ok{border-color:#2fbf63;background:#effbf3}
+.node.end{border-color:#8a90a0;background:#f3f4f7}
+.fa{align-self:center;color:#9aa1b3;font-size:20px}
+.vflow{display:flex;flex-direction:column;gap:6px}
+.branch{display:grid;grid-template-columns:150px 30px 1fr;align-items:center;gap:6px}
+.slotbar{display:flex;gap:6px;align-items:flex-end;flex-wrap:wrap}
+.sg{background:#00000055;border-radius:10px;padding:4px 6px 6px;border-top:3px solid}
+.sg .gt{font-size:10px;font-weight:bold;padding-bottom:3px}
+.sg .row{display:flex;gap:4px}
+.sl{width:42px;height:42px;border-radius:7px;background:#ffffff14;border:2px solid #ffffff33;display:flex;align-items:center;justify-content:center;font-size:21px;position:relative}
+.sl small{position:absolute;right:2px;bottom:-1px;font-size:10px;font-weight:bold}
+.sl.sel{border-color:#7cf29c;box-shadow:0 0 0 2px #7cf29c}
+.sl.zero{opacity:.35;filter:grayscale(1)}
+.sl .bar{position:absolute;left:4px;right:4px;bottom:3px;height:3px;background:#0008;border-radius:2px}
+.sl .bar i{position:absolute;left:0;top:0;bottom:0;border-radius:2px;background:#7cf29c}
+.wheel{width:190px;height:190px;border-radius:50%;background:conic-gradient(#ffffff10 0 60deg,#ffffff22 60deg 120deg,#ffffff10 120deg 180deg,#ffffff22 180deg 240deg,#ffffff10 240deg 300deg,#ffffff22 300deg 360deg);position:relative;margin:auto;border:2px solid #ffffff33}
+.wheel span{position:absolute;font-size:22px;transform:translate(-50%,-50%)}
+.wheel .hl{background:#ffb62755;border-radius:50%;padding:4px;outline:2px solid #ffb627}
+.wheel .ctr{left:50%;top:50%;width:70px;height:70px;border-radius:50%;background:#1b1e2a;display:flex;align-items:center;justify-content:center;font-size:11px;text-align:center;border:1px solid #ffffff33}
+.ladder{display:flex;gap:4px}
+.ladder div{flex:1;border-radius:6px;padding:6px 4px;text-align:center;font-size:11px;color:#fff;font-weight:bold}
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cmp .it{background:#1b1e2a;border-radius:8px;padding:8px;text-align:center}
+.cmp .it .big{font-size:30px}
+.seg{display:inline-flex;border:1px solid #ffffff33;border-radius:6px;overflow:hidden}
+.seg span{padding:2px 10px;font-size:11px}
+.seg span.on{background:#ffb627;color:#222;font-weight:bold}
+.ref{font-size:12px;color:var(--sub)}
+.adopt{font-weight:bold}
+.adopt.y{color:#1f9d55}
+.chg td:nth-child(2){color:#8a90a0}
+.chg td:nth-child(3){font-weight:bold}
+.pill{display:inline-block;border-radius:10px;padding:0 8px;font-size:12px;background:#eef1f7;margin:1px 2px}
+.qdot{display:inline-block;width:11px;height:11px;border-radius:50%;vertical-align:middle;margin-right:3px}
+.hud{background:#15171f;border-radius:14px;padding:18px;position:relative;min-height:270px;color:#e8eaf2;font-size:12px}
+.hud .qb{position:absolute;border-radius:50%;background:#000000a8;border:2px solid #ffffff66;display:flex;align-items:center;justify-content:center;font-size:24px}
+.hud .qb .cap{position:absolute;bottom:-16px;font-size:9px;color:#fff9;white-space:nowrap}
+.hud .qb .num{position:absolute;right:-2px;bottom:-2px;font-size:10px;font-weight:bold;background:#000a;border-radius:6px;padding:0 3px}
+.hud .wzone{position:absolute;left:50%;transform:translateX(-50%);bottom:34px;display:flex;gap:6px}
+.hud .wcard{width:104px;height:52px;background:#000000b0;border:1px solid #ffffff30;border-radius:7px;display:flex;align-items:center;gap:6px;padding:0 8px;position:relative}
+.hud .wcard.sel{border-color:#7cf29c;background:#163423d0}
+.hud .wcard .ic{font-size:26px}
+.hud .wcard .nm{font-size:11px;font-weight:bold}
+.hud .wcard .db{position:absolute;left:7px;right:7px;bottom:4px;height:3px;background:#0008;border-radius:2px}
+.hud .wcard .db i{position:absolute;left:0;top:0;bottom:0;border-radius:2px;background:#7cf29c}
+.hud .hpbar{position:absolute;left:50%;transform:translateX(-50%);bottom:12px;width:250px;height:9px;background:#0009;border-radius:5px}
+.hud .hpbar i{position:absolute;left:0;top:0;bottom:0;border-radius:5px;background:#f4f6fa}
+.hud .bslot{position:absolute;border-radius:50%;background:#000000b0;border:2px solid #4aa8ff;display:flex;align-items:center;justify-content:center;font-size:24px}
+.hud .tagq{position:absolute;top:-7px;right:-8px;background:#4aa8ff;color:#222;font-size:9px;border-radius:4px;padding:0 3px;font-weight:bold}
+figure.big img{border-radius:12px}
+.ts{display:inline-block;background:#eef1f7;color:#5d6475;border-radius:4px;padding:0 6px;font-size:12px;margin-left:6px;font-weight:normal}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav>
+ <div style="font-weight:bold;font-size:15px">📦 道具系统 需求文档</div>
+ <div class="ref">v11 · 2026-10-28</div>
+ <b>修订</b>
+ <a href="#rev">0. 本版修订说明（v11）</a>
+ <b>需求</b>
+ <a href="#bg">1. 背景与现状问题</a>
+ <b>方案（v11 重写）</b>
+ <a href="#goal">2. 需求总览</a>
+ <a href="#d0" class="s">2.1 物品四分类</a>
+ <a href="#d1" class="s">2.2 武器：耐久度</a>
+ <a href="#d2" class="s">2.3 药品：次数</a>
+ <a href="#d3" class="s">2.4 精灵球：独立槽位</a>
+ <a href="#d4" class="s">2.5 战利品：部分可用</a>
+ <a href="#d5" class="s">2.6 品质体系</a>
+ <a href="#ui">3. 交互界面</a>
+ <a href="#hud" class="s">3.1 HUD 布局</a>
+ <a href="#bag" class="s">3.2 背包与安全箱</a>
+ <b>收尾</b>
+ <a href="#num">4. 参数表</a>
+ <a href="#copy">5. 提示文案</a>
+ <a href="#acc">6. 验收标准</a>
+ <a href="#todo">7. 待确认</a>
+</nav>
+<main>
+<div class="hero">
+ <div class="emo">🐰🎒</div>
+ <h1>ABGame 道具系统 需求文档 v11</h1>
+ <p>四分类（武器 / 药品 / 精灵球 / 战利品）＋ 精灵球独立槽位 ＋ 耐久只留进度条 ＋ 10×8 可拖动大背包 ＋ 六级品质</p>
+ <div class="meta"><span>策划：cecilcai</span><span>状态：评审稿</span><span>配套 Demo：ABGame_道具系统Demo_v11.html</span><span>基于 v10 修订</span></div>
+</div>
+
+<h2 id="rev">0. 本版修订说明（v11）</h2>
+<table class="chg">
+ <tr><th style="width:130px">模块</th><th>v10</th><th>v11</th></tr>
+ <tr><td>物品分类</td><td>武器 / 消耗品 / 道具（独立类）/ 战利品</td><td><b>四类：武器 / 药品 / 精灵球 / 战利品</b>；去掉“道具”分类，原功能性道具回归战利品</td></tr>
+ <tr><td>精灵球</td><td>无</td><td><b>新增分类</b>：1×1 占一格，独立槽位在武器右侧，背包有球自动装填，长按切换品质</td></tr>
+ <tr><td>战利品</td><td>纯战利品，不可用</td><td><b>退回 v9 方式</b>：部分带可用功能，其余纯战利品；使用方式不变</td></tr>
+ <tr><td>功能性战利品</td><td>独立“道具”，按次数消耗，用完消失</td><td>归属战利品，用完进<b>冷却</b>，物品不消失，可继续带出去卖</td></tr>
+ <tr><td>耐久度展示</td><td>进度条 + 文字“耐久 12/15”</td><td><b>只显示进度条</b>，删掉具体数值文字</td></tr>
+ <tr><td>品质体系</td><td>仅战利品 / 武器按价值推算，共 4 档</td><td><b>全部四类统一六档</b>：白 / 绿 / 蓝 / 紫 / 金 / 红，统计放在背包</td></tr>
+ <tr><td>背包</td><td>8×6 固定</td><td><b>10×8 可上下拖动</b>，去掉快捷使用栏位，保留安全箱</td></tr>
+ <tr><td>安全箱</td><td>战利品 / 道具可放</td><td><b>只放战利品</b>（含功能型）</td></tr>
+ <tr><td>描述风格</td><td>大量 v9→v10 对比解释、括号补充说明</td><td><b>精简</b>：删去过度解释，只在修订说明保留变更；多用图、少用字</td></tr>
+</table>
+<h2 id="bg">1. 背景与现状问题</h2>
+<table>
+ <tr><th>#</th><th>问题</th><th>影响</th><th>v11 对应</th></tr>
+ <tr><td>①</td><td>v10 的“道具”类和战利品分开，玩家分不清“哪个能用、哪个只能卖”</td><td>分类认知成本高，教学难</td><td>四分类，战利品内部用<b>“可用”角标</b>区分</td></tr>
+ <tr><td>②</td><td>簧统一的“道具”不够直觉，投掷物没有独立入口</td><td>无法支撑“捕捉怪物”玩法</td><td><b>新增精灵球类</b>，独立槽位 + 按键</td></tr>
+ <tr><td>③</td><td>物品信息层级过多：文字、数值、描述堆在一起</td><td>屏幕信息过载，阅读成本高</td><td><b>只留进度条</b>，删减文字化表达</td></tr>
+ <tr><td>④</td><td>背包容量不足，品质基于价值推算，不利于养成体系</td><td>难以支撑后续品质玩法</td><td><b>六级品质</b>统一四类；背包扩至 10×8 可滚动</td></tr>
+</table>
+
+<h2 id="goal">2. 需求总览与分需求点详述</h2>
+<table>
+ <tr><th style="width:170px">编号</th><th>需求</th><th style="width:60px">优先级</th><th>v11 方案</th></tr>
+ <tr><td><a href="#d0">【B-0】物品四分类</a> <span class="tag tb">重写</span></td><td>重新划分物品类别</td><td><span class="tag pri-h">高</span></td><td><b>武器 / 药品 / 精灵球 / 战利品</b>四类；去掉“道具”，功能性物品回归战利品</td></tr>
+ <tr><td><a href="#d1">【B-1】武器耐久度</a> <span class="tag tb">修订</span></td><td>耐久度的展示与管理</td><td><span class="tag pri-h">高</span></td><td>保留耐久度机制，<b>界面只显示进度条</b>，低于 30% 变红；归零自动切换</td></tr>
+ <tr><td><a href="#d2">【B-2】药品次数</a> <span class="tag tb">修订</span></td><td>药品的次数管理</td><td><span class="tag pri-h">高</span></td><td>按次数消耗，用完消失；背包内自动合并堆叠，使用时自动补位</td></tr>
+ <tr><td><a href="#d3">【B-3】精灵球</a> <span class="tag tb">新增</span></td><td>新增精灵球类型与交互</td><td><span class="tag pri-h">高</span></td><td>1×1 占一格，<b>独立槽位</b>在武器右侧；背包有球自动装填，长按切换品质；投掷定身怪物</td></tr>
+ <tr><td><a href="#d4">【B-4】战利品</a> <span class="tag tb">退回</span></td><td>战利品的使用与存放</td><td><span class="tag pri-h">高</span></td><td><b>回到 v9 逻辑</b>：部分带可用功能（用完进冷却不消失）；全部可存入安全箱</td></tr>
+ <tr><td><a href="#d5">【B-5】品质体系</a> <span class="tag tb">新增</span></td><td>统一品质标准</td><td><span class="tag pri-m">中</span></td><td>全部四类统一<b>六档品质</b>：白 / 绿 / 蓝 / 紫 / 金 / 红</td></tr>
+</table>
+
+<h3 id="d0">2.1 物品四分类<span class="ts">【B-0】</span></h3>
+<div class="grid4">
+ <div class="card" style="border-top:4px solid var(--w)">
+  <div style="font-size:26px">⚔️</div>
+  <h4 style="color:var(--w)">武器</h4>
+  <p style="font-size:13px"><b>核心属性：耐久度</b></p>
+  <ul class="c" style="font-size:13px">
+   <li>占多格（1×1 ~ 3×1）</li>
+   <li>持久攻击消耗耐久</li>
+   <li>耐久只显示<b>进度条</b></li>
+   <li>归零自动换下一把</li>
+   <li>占用 HUD 左侧<b>2 格武器栏</b></li>
+  </ul>
+ </div>
+ <div class="card" style="border-top:4px solid var(--c)">
+  <div style="font-size:26px">✚</div>
+  <h4 style="color:var(--c)">药品</h4>
+  <p style="font-size:13px"><b>核心属性：使用次数</b></p>
+  <ul class="c" style="font-size:13px">
+   <li>1×1 占一格，可堆叠</li>
+   <li>用一次减一次</li>
+   <li>用完<b>直接消失</b></li>
+   <li>背包内自动合并</li>
+   <li>占用 HUD <b>R 键</b></li>
+  </ul>
+ </div>
+ <div class="card" style="border-top:4px solid var(--ball)">
+  <div style="font-size:26px">●</div>
+  <h4 style="color:var(--ball)">精灵球</h4>
+  <p style="font-size:13px"><b>核心属性：定身几率</b></p>
+  <ul class="c" style="font-size:13px">
+   <li>1×1 占一格，可堆叠</li>
+   <li>独立槽位，<b>不占武器栏</b></li>
+   <li>有球即<b>自动装填</b></li>
+   <li>投掷定身怪物，不造伤害</li>
+   <li>占用 HUD <b>E 键</b></li>
+  </ul>
+ </div>
+ <div class="card" style="border-top:4px solid var(--l)">
+  <div style="font-size:26px">$</div>
+  <h4 style="color:#c27c0e">战利品</h4>
+  <p style="font-size:13px"><b>核心属性：价值 + 可用功能</b></p>
+  <ul class="c" style="font-size:13px">
+   <li>占多格，尺寸各异</li>
+   <li>纯战利品：<b>只能卖</b></li>
+   <li>功能型：<b>可使用</b>，用完进冷却</li>
+   <li>不消失，可继续带出去卖</li>
+   <li>占用 HUD <b>G 键</b></li>
+  </ul>
+ </div>
+</div>
+<div class="note"><b>与 v10 的关键区别</b>：v10 将“可使用的战利品”独立成“道具”类；v11 <b>取消该分类</b>，这些物品仍归属战利品，但保留可使用能力（回到 v9 逻辑），仅把“次数消耗”改为“冷却”。</div>
+
+<h3 id="d1">2.2 武器：耐久度<span class="ts">【B-1】</span></h3>
+<div class="grid2">
+ <div class="mock">
+  <div class="mt"><span>HUD 武器栏（v10）</span><i>文字冗余</i></div>
+  <div style="display:flex;gap:8px">
+   <div class="sl sel" style="width:120px;height:52px">🔪
+    <div style="text-align:left;font-size:11px">菜刀<div style="font-size:10px;color:#ff6b6b">耐久 12/15</div></div>
+    <div class="bar"><i style="width:80%"></i></div>
+    <small>1</small>
+   </div>
+   <div class="sl" style="width:120px;height:52px">🐊
+    <div style="text-align:left;font-size:11px">鳄鱼枪<div style="font-size:10px;color:#7cf29c">耐久 30/30</div></div>
+    <div class="bar"><i style="width:100%"></i></div>
+    <small>2</small>
+   </div>
+  </div>
+  <p style="color:#ff6b6b;font-size:11px;margin-top:8px">❗ “耐久 12/15”文字与进度条信息重复</p>
+ </div>
+ <div class="mock">
+  <div class="mt"><span>HUD 武器栏（v11）</span><i>精简</i></div>
+  <div style="display:flex;gap:8px">
+   <div class="sl sel" style="width:120px;height:52px">🔪
+    <div style="text-align:left;font-size:11px;font-weight:bold">菜刀</div>
+    <div class="bar"><i style="width:80%"></i></div>
+    <small>1</small>
+   </div>
+   <div class="sl" style="width:120px;height:52px">🐊
+    <div style="text-align:left;font-size:11px;font-weight:bold">鳄鱼枪</div>
+    <div class="bar"><i style="width:100%;background:#7cf29c"></i></div>
+    <small>2</small>
+   </div>
+  </div>
+  <p style="color:#7cf29c;font-size:11px;margin-top:8px">✓ 只留图标 + 名称 + 进度条</p>
+ </div>
+</div>
+<table>
+ <tr><th>项</th><th>规则</th></tr>
+ <tr><td>耐久度展示</td><td><b>仅进度条</b>。当前占位卡底部一条细条；不显示具体数值</td></tr>
+ <tr><td>颜色规则</td><td>耐久 &gt; 30% 为绿色；≤ 30% 为红色（走到尽头时提示即将损坏）</td></tr>
+ <tr><td>耐久归零</td><td>物品<b>直接消失</b>，自动切换到下一把武器；全部没有时攻击键变为 👊 拳头</td></tr>
+ <tr><td>占格</td><td>1×1 ~ 3×1，不同武器占不同尺寸</td></tr>
+ <tr><td>修理</td><td>v11 暂不做修理，待确认（见第 7 节）</td></tr>
+</table>
+
+<h3 id="d2">2.3 药品：使用次数<span class="ts">【B-2】</span></h3>
+<div class="grid2">
+ <div class="mock">
+  <div class="mt"><span>背包中的药品</span><i>自动合并</i></div>
+  <div class="cells" style="grid-template-columns:repeat(4,1fr)">
+   <div class="cell q2">🧪<span class="ct" style="position:absolute;right:2px;bottom:0;font-size:9px">3</span></div>
+   <div class="cell q3">🍬<span class="ct" style="position:absolute;right:2px;bottom:0;font-size:9px">2</span></div>
+   <div class="cell q4">⚡</div>
+   <div class="cell f">·</div>
+  </div>
+  <p style="font-size:11px;color:#aab3c8;margin-top:6px">同种药品自动堆叠（上限 5），右下角显示数量</p>
+ </div>
+ <div class="mock">
+  <div class="mt"><span>使用流程</span><i>R 键</i></div>
+  <div class="vflow" style="margin-top:6px">
+   <div class="node" style="background:#232736;color:#e8eaf2;border-color:#ffffff30"><b>点击 R 键</b><span style="font-size:11px">使用当前快捷药品</span></div>
+   <div class="fa" style="color:#ffd166">↓</div>
+   <div class="node dia" style="background:#3a3020;color:#ffd166;border-color:#e09b2d"><b>是否满状态？</b><span style="font-size:11px">满血点回血 → 拦截</span></div>
+   <div class="fa" style="color:#7cf29c">↓</div>
+   <div class="node ok" style="background:#1a3020;color:#7cf29c;border-color:#2fbf63"><b>次数 -1</b><span style="font-size:11px">用完自动补位下一个</span></div>
+   <div class="fa" style="color:#ff6b6b">↓</div>
+   <div class="node end" style="background:#2a2d3a;color:#c9ccd3;border-color:#8a90a0"><b>次数归零 → 消失</b><span style="font-size:11px">从背包移除</span></div>
+  </div>
+ </div>
+</div>
+<table>
+ <tr><th>项</th><th>规则</th></tr>
+ <tr><td>堆叠</td><td>同种药品自动合并，每格上限 <b>5 个</b></td></tr>
+ <tr><td>占格</td><td>均为 <b>1×1</b></td></tr>
+ <tr><td>消耗</td><td>每次使用减 1 次；归零后<b>直接消失</b></td></tr>
+ <tr><td>智能拦截</td><td>满血点回血、满体力点饮料 → 提示且<b>不扣次数</b></td></tr>
+ <tr><td>情境推荐</td><td>血量 &lt; 40% 推荐回血药；体力 &lt; 20 推荐能量饮料</td></tr>
+</table>
+<h3 id="d3">2.4 精灵球：独立槽位<span class="ts">【B-3】 新增</span></h3>
+<div class="note"><b>设计目的</b>：支撑“捕捉怪物”玩法。精灵球不与武器争夺栏位，也不需要打开背包选择，降低操作门槛。</div>
+
+<h4>HUD 位置：武器栏右侧</h4>
+<div class="mock">
+ <div style="display:flex;align-items:flex-end;gap:14px;justify-content:center;padding:10px 0">
+  <div class="sg" style="border-top-color:var(--w)">
+   <div class="gt">⚔️ 武器栏</div>
+   <div class="row">
+    <div class="sl sel">🔪<div class="bar"><i style="width:70%"></i></div><small>1</small></div>
+    <div class="sl">🐊<div class="bar"><i style="width:100%"></i></div><small>2</small></div>
+   </div>
+  </div>
+  <div class="sg" style="border-top-color:var(--ball)">
+   <div class="gt">● 精灵球（独立）</div>
+   <div class="row">
+    <div class="sl" style="border-color:#ffc23d;position:relative">
+     ●
+     <span class="tagq" style="background:#ffc23d">金</span>
+     <div class="bar"><i style="width:79%;background:#ffc23d"></i></div>
+     <small style="font-size:9px">E</small>
+    </div>
+   </div>
+  </div>
+  <div class="sg" style="border-top-color:var(--l)">
+   <div class="gt">$ 战利品</div>
+   <div class="row"><div class="sl">🎩<div class="bar"><i style="width:100%;background:#4aa8ff"></i></div><small>G</small></div></div>
+  </div>
+ </div>
+ <p style="text-align:center;font-size:11px;color:#aab3c8;margin-top:6px">精灵球位于武器栏与战利品键之间，上方角标显示品质，底部条显示定身几率</p>
+</div>
+
+<h4>核心交互</h4>
+<div class="grid2">
+ <div class="mock">
+  <div class="mt"><span>① 自动装填</span><i>无需操作</i></div>
+  <div class="vflow" style="margin-top:6px">
+   <div class="node" style="background:#1a2535;color:#9ecbff;border-color:#4aa8ff"><b>背包里有精灵球</b></div>
+   <div class="fa" style="color:#9ecbff">↓</div>
+   <div class="node ok" style="background:#1a3020;color:#7cf29c;border-color:#2fbf63"><b>自动装填到槽位</b><span style="font-size:11px">优先装填品质最高的</span></div>
+   <div class="fa" style="color:#ff6b6b">↓</div>
+   <div class="node end" style="background:#2a2d3a;color:#c9ccd3;border-color:#8a90a0"><b>球用完 → 继续装填下一种</b></div>
+  </div>
+ </div>
+ <div class="mock">
+  <div class="mt"><span>② 长按切换品质</span><i>保持 E / 长按槽位</i></div>
+  <div class="wheel" style="width:170px;height:170px">
+   <span style="left:50%;top:14%;font-size:19px">●</span>
+   <span style="left:83%;top:32%;font-size:19px">●</span>
+   <span style="left:83%;top:68%;font-size:19px">●</span>
+   <span style="left:50%;top:86%;font-size:19px">●</span>
+   <span style="left:17%;top:68%;font-size:19px">●</span>
+   <span style="left:17%;top:32%;font-size:19px">●</span>
+   <div class="ctr">选择<br>品质</div>
+  </div>
+  <p style="text-align:center;font-size:11px;color:#aab3c8;margin-top:6px">按品质从高到低排列，指向哪个选哪个；回中间取消</p>
+ </div>
+</div>
+
+<h4>品质与定身几率</h4>
+<table>
+ <tr><th>品质</th><th>名称</th><th>定身几率</th><th>定身时长</th><th>说明</th></tr>
+ <tr><td><span class="qdot" style="background:var(--q1)"></span>白</td><td>破旧球</td><td>30%</td><td>1.0 s</td><td>随处可见，试试手气</td></tr>
+ <tr><td><span class="qdot" style="background:var(--q2)"></span>绿</td><td>普通球</td><td>45%</td><td>1.2 s</td><td>基础投掷</td></tr>
+ <tr><td><span class="qdot" style="background:var(--q3)"></span>蓝</td><td>优质球</td><td>60%</td><td>1.5 s</td><td>常见</td></tr>
+ <tr><td><span class="qdot" style="background:var(--q4)"></span>紫</td><td>精良球</td><td>72%</td><td>1.8 s</td><td>稀有</td></tr>
+ <tr><td><span class="qdot" style="background:var(--q5)"></span>金</td><td>黄金球</td><td>85%</td><td>2.2 s</td><td>稀有，高价值</td></tr>
+ <tr><td><span class="qdot" style="background:var(--q6)"></span>红</td><td>传说球</td><td>95%</td><td>2.8 s</td><td>极稀有，必定身</td></tr>
+</table>
+<table>
+ <tr><th>项</th><th>规则</th></tr>
+ <tr><td>占格</td><td><b>1×1</b>，可堆叠（每格上限 5）</td></tr>
+ <tr><td>投掷</td><td>点击键位即投出，沿角色朝向飞行</td></tr>
+ <tr><td>命中</td><td>按品质几率定身怪物；未命中显示“挣脱”</td></tr>
+ <tr><td>伤害</td><td><b>不造伤害</b>，仅控制（符合合规：无尸体、断肢）</td></tr>
+ <tr><td>消耗</td><td>投一次消耗一个；用完自动装填下一种</td></tr>
+</table>
+
+<h3 id="d4">2.5 战利品：部分可用<span class="ts">【B-4】 退回 v9 逻辑</span></h3>
+<div class="note"><b>与 v10 的差异</b>：v10 把可使用的拆成独立“道具”类；<b>v11 退回 v9</b>：这些物品仍是战利品，但保留功能，并将“次数消耗”改为<b>“使用后冷却”</b>。</div>
+
+<div class="grid2">
+ <div class="mock">
+  <div class="mt"><span>纯战利品（不可用）</span><i>只能卖</i></div>
+  <div class="cells" style="grid-template-columns:repeat(4,1fr)">
+   <div class="cell q3">📖</div>
+   <div class="cell q4">🦆</div>
+   <div class="cell q5">🏆</div>
+   <div class="cell q6">💎</div>
+  </div>
+  <p style="font-size:11px;color:#aab3c8;margin-top:6px">书籍 / 小鸭 / 奖杯 / 钻石</p>
+  <div class="node end" style="margin-top:8px;background:#2a2d3a;color:#c9ccd3;border-color:#8a90a0"><b>存入安全箱 → 带出卖钱</b></div>
+ </div>
+ <div class="mock">
+  <div class="mt"><span>功能性战利品（可用）</span><i>用完冷却</i></div>
+  <div class="cells" style="grid-template-columns:repeat(4,1fr)">
+   <div class="cell q2">🧨</div>
+   <div class="cell q3">📯</div>
+   <div class="cell q3">🕶</div>
+   <div class="cell q4">☂</div>
+  </div>
+  <p style="font-size:11px;color:#aab3c8;margin-top:6px">爆竹 / 号角 / 墨镜 / 雨伞（带绿色“可用”角标）</p>
+  <div class="node ok" style="margin-top:8px;background:#1a3020;color:#7cf29c;border-color:#2fbf63"><b>点击 G 使用 → 进冷却，物品不消失</b></div>
+ </div>
+</div>
+
+<table>
+ <tr><th>项</th><th>规则</th></tr>
+ <tr><td>分类</td><td>全部归属<b>战利品</b>；内部用“可用 / 不可用”区分</td></tr>
+ <tr><td>标识</td><td>可用的在背包格、地面、详情卡均显示<b>绿色“可用”角标</b></td></tr>
+ <tr><td>使用方式</td><td>点击 HUD 战利品键（G 键）或在背包中点击</td></tr>
+ <tr><td>使用后</td><td>进入<b>冷却</b>，冷却中无法再次使用；<b>物品不消失</b></td></tr>
+ <tr><td>冷却展示</td><td>背包格显示倒计秒数；键位用进度条表示冷却恢复情况</td></tr>
+ <tr><td>存放</td><td><b>全部战利品（含功能型）均可存入安全箱</b></td></tr>
+ <tr><td>结算</td><td>按品质与基础价值折算；功能型不因使用而减值</td></tr>
+</table>
+
+<h3 id="d5">2.6 品质体系<span class="ts">【B-5】 新增</span></h3>
+<div class="note"><b>关键变化</b>：v10 仅战利品 / 武器按价值推算品质（共 4 档）；<b>v11 将六档品质统一应用于全部四类</b>，不再由价值推算，而是写死在物品定义里，便于后续养成、图鉴、掉落权重系统对齐。</div>
+
+<div class="mock">
+ <div class="mt"><span>六档品质色板</span><i>全类型通用</i></div>
+ <div class="ladder">
+  <div style="background:var(--q1)">白<br>普通</div>
+  <div style="background:var(--q2)">绿<br>优秀</div>
+  <div style="background:var(--q3)">蓝<br>精良</div>
+  <div style="background:var(--q4)">紫<br>史诗</div>
+  <div style="background:var(--q5);color:#222">金<br>传奇</div>
+  <div style="background:var(--q6)">红<br>神话</div>
+ </div>
+ <div class="cells" style="grid-template-columns:repeat(6,1fr);margin-top:10px">
+  <div class="cell q1">🔪</div>
+  <div class="cell q2">🧪</div>
+  <div class="cell q3">●</div>
+  <div class="cell q4">💎</div>
+  <div class="cell q5">🏆</div>
+  <div class="cell q6">👑</div>
+ </div>
+ <p style="text-align:center;font-size:11px;color:#aab3c8;margin-top:6px">背包格子的边框颜色即为品质，四类物品统一规则</p>
+</div>
+
+<table>
+ <tr><th>档位</th><th>品质</th><th>颜色</th><th>适用范围</th><th>示例</th></tr>
+ <tr><td>1</td><td>白 · 普通</td><td><span class="qdot" style="background:var(--q1)"></span>#8a8f9e</td><td>基础物资</td><td>菜刀、破旧球、小血瓶</td></tr>
+ <tr><td>2</td><td>绿 · 优秀</td><td><span class="qdot" style="background:var(--q2)"></span>#5ad17a</td><td>常见物资</td><td>普通球、爆竹</td></tr>
+ <tr><td>3</td><td>蓝 · 精良</td><td><span class="qdot" style="background:var(--q3)"></span>#4aa8ff</td><td>中级物资</td><td>优质球、墨镜、书籍</td></tr>
+ <tr><td>4</td><td>紫 · 史诗</td><td><span class="qdot" style="background:var(--q4)"></span>#b26bff</td><td>稀有物资</td><td>精良球、雨伞、小鸭</td></tr>
+ <tr><td>5</td><td>金 · 传奇</td><td><span class="qdot" style="background:var(--q5)"></span>#ffc23d</td><td>高稀有度</td><td>黄金球、奖杯</td></tr>
+ <tr><td>6</td><td>红 · 神话</td><td><span class="qdot" style="background:var(--q6)"></span>#ff4d4f</td><td>顶级物资</td><td>传说球、钻石、皇冠</td></tr>
+</table>
+<table>
+ <tr><th>项</th><th>规则</th></tr>
+ <tr><td>定义方式</td><td>品质写死在物品配置里，<b>不随价值浮动</b></td></tr>
+ <tr><td>适用范围</td><td>武器 / 药品 / 精灵球 / 战利品 <b>四类全部适用</b></td></tr>
+ <tr><td>显示位置</td><td>背包格边框、地面光圈、详情卡标签、精灵球槽位角标</td></tr>
+ <tr><td>搜索时间</td><td>搜索时间 = 0.35 + 0.3 × 品质档（白 0.65s → 红 2.15s）</td></tr>
+ <tr><td>排序</td><td>整理背包时，同类内按<b>品质由高到低</b>排列</td></tr>
+</table>
+<h2 id="ui">3. 交互界面</h2>
+
+<h3 id="hud">3.1 HUD 布局<span class="ts">精简原则</span></h3>
+<div class="hud">
+ <div style="position:absolute;left:16px;top:14px;font-size:11px;color:#9aa1b3">左上：血条 / 体力条</div>
+ <div style="position:absolute;left:16px;top:34px;width:120px;height:7px;background:#0009;border-radius:4px"><i style="position:absolute;left:0;top:0;bottom:0;width:72%;background:#f4f6fa;border-radius:4px"></i></div>
+ <div style="position:absolute;left:16px;top:46px;width:120px;height:7px;background:#0009;border-radius:4px"><i style="position:absolute;left:0;top:0;bottom:0;width:45%;background:#ffd166;border-radius:4px"></i></div>
+
+ <div class="wzone">
+  <div class="wcard sel">
+   <span class="ic">🔪</span>
+   <span class="nm">菜刀</span>
+   <span class="k" style="position:absolute;right:5px;top:3px;font-size:9px;color:#fff6">1</span>
+   <div class="db"><i style="width:70%"></i></div>
+  </div>
+  <div class="wcard">
+   <span class="ic">🐊</span>
+   <span class="nm">鳄鱼枪</span>
+   <span class="k" style="position:absolute;right:5px;top:3px;font-size:9px;color:#fff6">2</span>
+   <div class="db"><i style="width:100%"></i></div>
+  </div>
+ </div>
+
+ <div class="bslot" style="width:54px;height:54px;left:calc(50% + 130px);bottom:34px;border-color:#ffc23d">
+  ●
+  <span class="tagq" style="background:#ffc23d">金</span>
+  <span class="num" style="font-size:9px">×3</span>
+ </div>
+
+ <div class="qb" style="width:54px;height:54px;left:calc(50% + 200px);bottom:34px;border-color:#ffffff66">
+  🎩
+  <span class="num">G</span>
+  <div style="position:absolute;left:8px;right:8px;bottom:6px;height:3px;background:#0008;border-radius:2px"><i style="position:absolute;left:0;top:0;bottom:0;width:100%;background:#4aa8ff;border-radius:2px"></i></div>
+ </div>
+
+ <div class="hpbar"><i style="width:72%"></i></div>
+
+ <div style="position:absolute;right:16px;bottom:20px;font-size:11px;color:#9aa1b3">右下：移动摇杆 / 攻击键</div>
+ <div style="position:absolute;right:16px;bottom:40px;width:70px;height:70px;border-radius:50%;border:2px solid #ffffff33;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff9">👞</div>
+ <div style="position:absolute;left:16px;bottom:20px;font-size:11px;color:#9aa1b3">左下：背包键 + 本局收获</div>
+</div>
+<figcaption>HUD 示意图：下方中间为武器栏 2 格；紧邻右侧是<b>精灵球独立槽位</b>（金色角标）；再右是战利品键</figcaption>
+
+<table>
+ <tr><th>区域</th><th>内容</th><th>v11 设计</th></tr>
+ <tr><td>左上</td><td>血条 / 体力条</td><td>保持不变；血量 &lt; 40% 血条变红</td></tr>
+ <tr><td>下方中间</td><td>武器栏 2 格</td><td><b>只显示：图标 + 名称 + 耐乵进度条</b>；当前占位绿框高亮</td></tr>
+ <tr><td>武器右侧</td><td><b>精灵球槽位</b></td><td>新增。圆形槽，左上角标显示品质，右下角显示数量，底部条为定身几率</td></tr>
+ <tr><td>再右侧</td><td>战利品键（G）</td><td>图标 + 冷却倒计秒；冷却中显示剩余秒数</td></tr>
+ <tr><td>左下</td><td>背包键</td><td>保留，显示本局收获数字</td></tr>
+ <tr><td>右下</td><td>移动摇杆 / 攻击键</td><td>保持不变</td></tr>
+</table>
+<div class="note">其余位置（药品键、技能键）依据现有版本保留，不在本版调整范围。</div>
+
+<h3 id="bag">3.2 背包与安全箱<span class="ts">扩容 + 可滚动</span></h3>
+<div class="grid2">
+ <div class="mock">
+  <div class="mt"><span>背包 10×8（v11）</span><i>可上下拖动</i></div>
+  <div class="cells" style="grid-template-columns:repeat(10,1fr);max-height:210px;overflow:hidden">
+   <div class="cell q2" style="grid-column:span 2">🐊</div>
+   <div class="cell q1">🔪</div>
+   <div class="cell f">·</div>
+   <div class="cell q2">🧪</div>
+   <div class="cell q3">⚡</div>
+   <div class="cell f">·</div>
+   <div class="cell f">·</div>
+   <div class="cell q4">🧨</div>
+   <div class="cell f">·</div>
+   <div class="cell q2">🧪</div>
+   <div class="cell q3">●</div>
+   <div class="cell q5">●</div>
+   <div class="cell f">·</div>
+   <div class="cell f">·</div>
+   <div class="cell q3">📖</div>
+   <div class="cell q4">🦆</div>
+   <div class="cell f">·</div>
+   <div class="cell f">·</div>
+   <div class="cell f">·</div>
+   <div class="cell q5">💎</div>
+   <div class="cell f">·</div>
+   <div class="cell f">·</div>
+   <div class="cell f">·</div>
+   <div class="cell f">·</div>
+   <div class="cell f">·</div>
+   <div class="cell f">·</div>
+   <div class="cell f">·</div>
+   <div class="cell f">·</div>
+   <div class="cell f">·</div>
+   <div class="cell f">·</div>
+   <div class="cell f">·</div>
+   <div class="cell f">·</div>
+   <div class="cell f">·</div>
+   <div class="cell f">·</div>
+   <div class="cell f">·</div>
+   <div class="cell f">·</div>
+   <div class="cell f">·</div>
+   <div class="cell f">·</div>
+   <div class="cell f">·</div>
+   <div class="cell f">·</div>
+  </div>
+  <p style="font-size:11px;color:#ffd166;margin-top:8px">↕ 右侧出现滚动条，可上下拖动查看全部物品</p>
+ </div>
+ <div class="mock">
+  <div class="mt"><span>安全箱（只放战利品）</span><i>Lv1 → Lv5</i></div>
+  <div class="ladder" style="margin-bottom:8px">
+   <div style="background:#4a5163">Lv1<br>2×1</div>
+   <div style="background:var(--q3)">Lv2<br>2×2</div>
+   <div style="background:var(--q2)">Lv3<br>3×2</div>
+   <div style="background:var(--q5);color:#222">Lv4<br>3×3</div>
+   <div style="background:var(--q6)">Lv5<br>4×3</div>
+  </div>
+  <div class="cells" style="grid-template-columns:repeat(3,1fr);max-width:150px">
+   <div class="cell q5">💎</div>
+   <div class="cell q4">🎩</div>
+   <div class="cell f" style="opacity:.5">🔒</div>
+  </div>
+  <p style="font-size:11px;color:#aab3c8;margin-top:6px">未解锁格显示 🔒 与解锁等级；<b>只接收战利品</b>（含功能型）</p>
+ </div>
+</div>
+
+<table>
+ <tr><th>项</th><th>v10</th><th>v11</th></tr>
+ <tr><td>背包尺寸</td><td>8×6 = 48 格，固定</td><td><b>10×8 = 80 格</b>，可上下拖动</td></tr>
+ <tr><td>快捷使用栏</td><td>背包内有“快捷使用栏位”</td><td><b>去掉</b>；改由 HUD 键位直接使用</td></tr>
+ <tr><td>安全箱</td><td>战利品 / 道具可放</td><td><b>只放战利品</b>（含功能型）</td></tr>
+ <tr><td>安全箱尺寸</td><td>4×3 固定框架</td><td>尺寸随等级变化：Lv1 2×1 → Lv5 4×3</td></tr>
+ <tr><td>物品尺寸</td><td>1×1 ~ 3×1 / 2×2 / 1×3</td><td>保持不变；支持拖拽摆放、<kbd>R</kbd> 旋转</td></tr>
+ <tr><td>整理规则</td><td>武器 → 消耗品 → 道具 → 战利品</td><td><b>武器 → 药品 → 精灵球 → 战利品</b>；同类内按品质由高到低</td></tr>
+</table>
+
+<div class="mock">
+ <div class="mt"><span>背包整理顺序（v11）</span><i>四段</i></div>
+ <div class="flow" style="justify-content:center">
+  <div class="node" style="background:#3a2222;color:#ff7b6b;border-color:#ff5a4e"><b>⚔️ 武器</b><span style="font-size:11px">按品质→耐乵</span></div>
+  <div class="fa">→</div>
+  <div class="node" style="background:#1a3020;color:#5ad17a;border-color:#2fbf63"><b>✚ 药品</b><span style="font-size:11px">合并同种</span></div>
+  <div class="fa">→</div>
+  <div class="node" style="background:#1a2535;color:#6cb8ff;border-color:#4aa8ff"><b>● 精灵球</b><span style="font-size:11px">按品质</span></div>
+  <div class="fa">→</div>
+  <div class="node" style="background:#3a3020;color:#f2b01e;border-color:#e09b2d"><b>$ 战利品</b><span style="font-size:11px">可用者在前</span></div>
+ </div>
+ <p style="text-align:center;font-size:11px;color:#aab3c8;margin-top:8px">从左上角依次摆放；战斗轮盘也按此顺序自动填入</p>
+</div>
+<h2 id="num">4. 参数表</h2>
+
+<h3>4.1 全局配置</h3>
+<table>
+ <tr><th>参数</th><th>默认值</th><th>范围</th><th>说明</th></tr>
+ <tr><td>背包列数</td><td>10</td><td>8 ~ 12</td><td>v11 扩容</td></tr>
+ <tr><td>背包行数</td><td>8</td><td>6 ~ 10</td><td>超出部分可滚动</td></tr>
+ <tr><td>武器栏格数</td><td>2</td><td>1 ~ 3</td><td>保持 v10</td></tr>
+ <tr><td>轮盘格数</td><td>6</td><td>4 ~ 8</td><td>武器 / 药品 / 精灵球 / 战利品共用</td></tr>
+ <tr><td>安全箱等级</td><td>Lv2</td><td>Lv1 ~ Lv5</td><td>尺寸随等级变化</td></tr>
+ <tr><td>堆叠上限</td><td>5</td><td>1 ~ 10</td><td>药品 / 精灵球每格</td></tr>
+ <tr><td>品质档位</td><td>6</td><td>固定</td><td>白 / 绿 / 蓝 / 紫 / 金 / 红</td></tr>
+</table>
+
+<h3>4.2 精灵球参数</h3>
+<table>
+ <tr><th>球种</th><th>品质</th><th>定身几率</th><th>定身时长</th><th>卖价</th></tr>
+ <tr><td>破旧球</td><td><span class="qdot" style="background:var(--q1)"></span>白</td><td>30%</td><td>1.0 s</td><td>60</td></tr>
+ <tr><td>普通球</td><td><span class="qdot" style="background:var(--q2)"></span>绿</td><td>45%</td><td>1.2 s</td><td>150</td></tr>
+ <tr><td>优质球</td><td><span class="qdot" style="background:var(--q3)"></span>蓝</td><td>60%</td><td>1.5 s</td><td>400</td></tr>
+ <tr><td>精良球</td><td><span class="qdot" style="background:var(--q4)"></span>紫</td><td>72%</td><td>1.8 s</td><td>1000</td></tr>
+ <tr><td>黄金球</td><td><span class="qdot" style="background:var(--q5)"></span>金</td><td>85%</td><td>2.2 s</td><td>3000</td></tr>
+ <tr><td>传说球</td><td><span class="qdot" style="background:var(--q6)"></span>红</td><td>95%</td><td>2.8 s</td><td>8000</td></tr>
+</table>
+
+<h3>4.3 功能性战利品参数</h3>
+<table>
+ <tr><th>物品</th><th>品质</th><th>功能</th><th>冷却</th><th>占格</th></tr>
+ <tr><td>🧨 爆竹</td><td><span class="qdot" style="background:var(--q2)"></span>绿</td><td>范围击飞 怪物</td><td>12 s</td><td>1×1</td></tr>
+ <tr><td>📯 号角</td><td><span class="qdot" style="background:var(--q3)"></span>蓝</td><td>吸引怪物注意</td><td>10 s</td><td>1×1</td></tr>
+ <tr><td>🕶 墨镜</td><td><span class="qdot" style="background:var(--q3)"></span>蓝</td><td>短时隐身</td><td>22 s</td><td>1×1</td></tr>
+ <tr><td>☂ 雨伞</td><td><span class="qdot" style="background:var(--q4)"></span>紫</td><td>减速下落</td><td>8 s</td><td>1×3</td></tr>
+ <tr><td>🧲 磁铁</td><td><span class="qdot" style="background:var(--q4)"></span>紫</td><td>吸附近处物品</td><td>15 s</td><td>1×1</td></tr>
+ <tr><td>🎩 魔术帽</td><td><span class="qdot" style="background:var(--q5)"></span>金</td><td>全屏致盲怪物</td><td>30 s</td><td>1×1</td></tr>
+</table>
+
+<h2 id="copy">5. 提示文案</h2>
+<table>
+ <tr><th style="width:210px">场景</th><th>文案</th><th style="width:80px">类型</th></tr>
+ <tr><td>精灵球自动装填</td><td>精灵球已装填：● <b>{name}</b>（{quality}）</td><td><span class="tag tb">信息</span></td></tr>
+ <tr><td>投掷精灵球</td><td>投出！</td><td><span class="tag tb">信息</span></td></tr>
+ <tr><td>精灵球命中</td><td>定住！</td><td><span class="tag tc">成功</span></td></tr>
+ <tr><td>精灵球未命中</td><td>挣脱</td><td><span class="tag tl">警告</span></td></tr>
+ <tr><td>背包无精灵球</td><td>背包里没有精灵球</td><td><span class="tag tl">警告</span></td></tr>
+ <tr><td>切换精灵球品质</td><td>精灵球 → ● <b>{name}</b></td><td><span class="tag tb">信息</span></td></tr>
+ <tr><td>战利品使用成功</td><td>使用 {icon}<b>{name}</b>：{effect}</td><td><span class="tag tc">成功</span></td></tr>
+ <tr><td>战利品冷却中</td><td>{name} 冷却中 <b>{n}s</b></td><td><span class="tag tl">警告</span></td></tr>
+ <tr><td>药品用完自动补位</td><td>快捷药品换成 {icon}<b>{name}</b></td><td><span class="tag tb">信息</span></td></tr>
+ <tr><td>满血点回血</td><td>血量已满，不需要回血</td><td><span class="tag tl">警告</span></td></tr>
+ <tr><td>非战利品放入安全箱</td><td>只有战利品能放入安全箱</td><td><span class="tag tw">错误</span></td></tr>
+ <tr><td>背包整理完成</td><td>✙ 已整理：武器 {a} · 药品 {b} · 精灵球 {c} · 战利品 {d}</td><td><span class="tag tc">成功</span></td></tr>
+</table>
+
+<h2 id="acc">6. 验收标准</h2>
+<table>
+ <tr><th style="width:60px">#</th><th>验收项</th><th>预期结果</th></tr>
+ <tr><td>1</td><td>四分类生效</td><td>背包中武器、药品、精灵球、战利品各自分区显示；无“道具”分类</td></tr>
+ <tr><td>2</td><td>武器耐乵展示</td><td>卡片上只有进度条，无“耐乵 n/m”文字；低于 30% 变红</td></tr>
+ <tr><td>3</td><td>药品次数</td><td>使用一次减 1，归零后物品消失并自动补位</td></tr>
+ <tr><td>4</td><td>精灵球自动装填</td><td>背包有球时，进入对局即自动装填到独立槽位，优先高品质</td></tr>
+ <tr><td>5</td><td>精灵球切换</td><td>长按槽位出轮盘，按品质从高到低排列；指向即选中，回中心取消</td></tr>
+ <tr><td>6</td><td>精灵球投掷</td><td>点击键位投出；命中显示“定住”，未命中显示“挣脱”；<b>不对怪物造成伤害</b></td></tr>
+ <tr><td>7</td><td>战利品可用性</td><td>功能型带绿色“可用”角标；点击后产生效果并进入冷却</td></tr>
+ <tr><td>8</td><td>战利品不消失</td><td>使用完成后物品仍在背包，格子显示倒计秒；冷却结束后可再次使用</td></tr>
+ <tr><td>9</td><td>六档品质</td><td>四类物品均有品质；背包格边框、地面光圈、详情卡均正确显示对应颜色</td></tr>
+ <tr><td>10</td><td>背包容量与滚动</td><td>背包为 10×8；内容超出时右侧出现滚动条，可上下拖动</td></tr>
+ <tr><td>11</td><td>安全箱限制</td><td>仅战利品可放入；武器 / 药品 / 精灵球放入时提示“只有战利品能放入安全箱”</td></tr>
+ <tr><td>12</td><td>整理顺序</td><td>点击整理后，顺序为 武器 → 药品 → 精灵球 → 战利品；同类内品质高者在前</td></tr>
+</table>
+
+<h2 id="todo">7. 待确认</h2>
+<table>
+ <tr><th style="width:60px">#</th><th>问题</th><th>选项</th><th style="width:80px">状态</th></tr>
+ <tr><td>1</td><td>精灵球投掷后是否可回收？</td><td>A. 不可回收（消耗品） / B. 未命中可回收 / C. 始终可回收</td><td><span class="tag tl">待定</span></td></tr>
+ <tr><td>2</td><td>精灵球是否占用背包格子？</td><td>当前方案：<b>占背包格子</b>，但不占武器栏</td><td><span class="tag tl">待定</span></td></tr>
+ <tr><td>3</td><td>定身的怪物如何处理（捕捉 / 离开）？</td><td>涉及核心玩法，需与怪物组同步</td><td><span class="tag tw">重要</span></td></tr>
+ <tr><td>4</td><td>武器是否支持修理？</td><td>A. 不支持 / B. 支持简易修理 / C. 配合工作台</td><td><span class="tag tl">待定</span></td></tr>
+ <tr><td>5</td><td>功能性战利品在市场卖出时，冷却中是否折价？</td><td>当前方案：<b>不折价</b>，冷却不影响价值</td><td><span class="tag tl">待定</span></td></tr>
+ <tr><td>6</td><td>红色“神话”品质的获取途径？</td><td>仅 Boss 掉落 / 特定事件 / 购买</td><td><span class="tag tl">待定</span></td></tr>
+</table>
+
+<div class="note"><b>配套交付</b>：<code>ABGame_道具系统Demo_v11.html</code>（可交互 Demo）。本文档所有示意图均为纯 CSS 绘制，不依赖外部图片。</div>
+</main>
+</div>
+</body>
+</html>

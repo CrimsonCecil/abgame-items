@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ABGame · 精灵球抓宠策划案 V0.1</title>
+<style>
+:root{--bg:#F2E9DA;--paper:#FBF6EC;--paper2:#F6EEDF;--ink:#2C241E;--muted:#776656;--line:#E3D5C0;--red:#E4503F;--mint:#2A9E86;--gold:#D8941A;--blue:#4F9BEA;--purple:#A86CE2;--night:#1F2734;
+--q1:#6CC870;--q2:#4F9BEA;--q3:#A86CE2;--q4:#F2B53A;--font:'Noto Sans SC','PingFang SC','Microsoft YaHei',sans-serif}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.7}
+.wrap{max-width:980px;margin:0 auto;padding:28px 18px 60px}
+header{text-align:center;padding:10px 0 18px}
+header h1{margin:0;font-size:28px}header p{margin:6px 0 0;color:var(--muted)}
+.ver{display:inline-block;margin-top:8px;padding:2px 12px;border-radius:99px;background:var(--ink);color:var(--paper);font-size:13px}
+.tabs{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:10px 0 18px;position:sticky;top:0;background:var(--bg);padding:8px 0;z-index:5}
+.tabs button{border:1.5px solid var(--line);background:var(--paper);color:var(--ink);padding:7px 16px;border-radius:99px;font-size:15px}
+.tabs button.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.page{display:none}.page.on{display:block}
+.card{background:var(--paper);border:1.5px solid var(--line);border-radius:18px;padding:20px 22px;margin:0 0 16px;box-shadow:0 8px 24px -16px rgba(60,40,20,.3)}
+h2{font-size:20px;margin:0 0 8px}h3{font-size:16px;margin:14px 0 4px}
+p{margin:6px 0}ul{margin:6px 0;padding-left:20px}li{margin:3px 0}
+.tag{display:inline-block;font-size:13px;padding:0 9px;border-radius:99px;background:var(--paper2);border:1px solid var(--line);color:var(--muted);margin-right:6px}
+table{width:100%;border-collapse:collapse;font-size:15px}
+th,td{border-bottom:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}th{background:var(--paper2);font-weight:700}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.zoom{cursor:zoom-in;position:relative}
+.zoom:after{content:"单击放大";position:absolute;right:10px;top:8px;font-size:12px;color:var(--muted);background:rgba(251,246,236,.85);padding:0 8px;border-radius:99px}
+.stage{background:var(--night);border-radius:16px;height:260px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;color:#fff}
+.cap{text-align:center;font-size:14px;color:var(--muted);margin-top:6px}
+#lb{position:fixed;inset:0;background:rgba(20,15,10,.82);display:none;align-items:center;justify-content:center;z-index:50;cursor:zoom-out}
+#lb.on{display:flex}#lb .box{width:min(92vw,900px);transform-origin:center}#lb .stage{height:min(72vh,520px)}
+.note{background:#FFF4D6;border:1.5px dashed var(--gold);border-radius:14px;padding:10px 14px;font-size:14px}
+/* ball */
+.ball{width:46px;height:46px;border-radius:50%;background:linear-gradient(#E4503F 0 46%,#2C241E 46% 54%,#fff 54%);border:3px solid #2C241E;position:absolute;left:12%;bottom:18%}
+.ball:after{content:"";position:absolute;left:50%;top:50%;width:14px;height:14px;margin:-7px;border-radius:50%;background:#fff;border:3px solid #2C241E}
+.pet{width:70px;height:62px;border-radius:50% 50% 44% 44%;background:#8FD3A8;position:absolute;right:16%;bottom:18%;border:3px solid #2C241E}
+.pet:before,.pet:after{content:"";position:absolute;top:20px;width:8px;height:8px;border-radius:50%;background:#2C241E}.pet:before{left:18px}.pet:after{right:18px}
+.flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none}
+.polaroid{width:132px;background:#fff;padding:9px 9px 30px;position:absolute;left:50%;top:50%;margin:-96px 0 0 -66px;box-shadow:0 10px 28px rgba(0,0,0,.45);color:#2C241E;text-align:center;font-size:12px;opacity:0}
+.polaroid .ph{height:104px;background:#cfd8cf;position:relative;overflow:hidden}
+.polaroid .ph i{position:absolute;inset:0;background:#8FD3A8;filter:blur(14px);opacity:1}
+.polaroid .nm{position:absolute;left:0;right:0;bottom:7px;font-size:13px;font-weight:700}
+/* scene loop 9s */
+.s1 .ball{animation:throw 9s infinite}
+.s1 .pet{animation:petA 9s infinite}
+.s1 .flash{animation:fl 9s infinite}
+.s1 .polaroid{animation:pol 9s infinite}
+.s1 .polaroid .ph i{animation:dev 9s infinite}
+.s1 .t{position:absolute;left:0;right:0;top:10px;text-align:center;font-size:14px;color:#cfd6e2}
+@keyframes throw{0%{left:12%;bottom:18%;opacity:1}8%{left:46%;bottom:48%}15%{left:66%;bottom:22%}22%,60%{left:66%;bottom:20%;transform:rotate(0)}26%{transform:rotate(-24deg)}30%{transform:rotate(22deg)}34%,40%{transform:rotate(0)}44%{transform:rotate(-24deg)}48%{transform:rotate(22deg)}52%{transform:rotate(0)}58%{left:66%;bottom:20%;opacity:1}64%,100%{left:66%;bottom:20%;opacity:0}}
+@keyframes petA{0%,14%{opacity:1;transform:scale(1)}20%{opacity:0;transform:scale(.1)}21%,100%{opacity:0}}
+@keyframes fl{0%,60%{opacity:0}61%{opacity:.95}66%,100%{opacity:0}}
+@keyframes pol{0%,62%{opacity:0;transform:translateY(40px) rotate(-8deg)}68%{opacity:1;transform:translateY(0) rotate(-3deg)}94%{opacity:1;transform:translateY(0) rotate(-3deg)}100%{opacity:0}}
+@keyframes dev{0%,68%{filter:blur(18px);opacity:.15}92%{filter:blur(0);opacity:1}100%{opacity:1}}
+/* box scene */
+.film{width:150px;height:170px;background:#F7F3EA;border-radius:6px;position:relative;box-shadow:0 8px 20px rgba(0,0,0,.4);color:#2C241E;text-align:center;padding-top:14px;font-size:12px}
+.film .band{position:absolute;left:0;right:0;top:0;height:26px;background:linear-gradient(90deg,#E4503F,#F2B53A,#4F9BEA,#6CC870);border-radius:6px 6px 0 0}
+.film .win{width:92px;height:92px;margin:22px auto 4px;background:#2b3444;border-radius:4px;position:relative}
+.film .win .ball{left:50%;top:50%;bottom:auto;margin:-23px 0 0 -23px;animation:bob 3s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-6px)}}
+.q{display:inline-block;width:14px;height:14px;border-radius:3px;margin-right:6px;vertical-align:-2px}
+svg text{font-family:var(--font)}
+.flow path{stroke-dasharray:6 6;animation:dash 1s linear infinite}@keyframes dash{to{stroke-dashoffset:-12}}
+</style></head><body><div class="wrap">
+<header><h1>ABGame · 精灵球抓宠策划案</h1><p>把野生宠物装进球里，再冲成一张拍立得</p><span class="ver">V0.1 · 初稿待评审</span></header>
+<nav class="tabs" id="tabs"></nav>
+
+<section class="page on" data-t="概览">
+<div class="card"><h2>一句话</h2><p>精灵球是一次性投掷道具。点按使用，球飞向范围内最近的野生宠物，经过三次摇晃判定，成功就弹出一张拍立得相纸，宠物以照片形式放进背包。</p>
+<p><span class="tag">道具类型：可使用道具</span><span class="tag">操作：只支持点按</span><span class="tag">包装：拍立得</span></p></div>
+<div class="grid">
+<div class="card"><h2>要解决什么</h2><ul><li>给宠物一个有仪式感的获得方式，不是点一下就送。</li><li>让弱化宠物、控制状态有价值，战斗和捕获互相牵连。</li><li>相纸包装让背包里的宠物一眼能认，也能拿来收藏炫耀。</li></ul></div>
+<div class="card"><h2>本版范围</h2><ul><li>抓宠流程、捕获率、三档精灵球。</li><li>拍立得包装：未使用的胶片盒，已捕获的相纸。</li><li>放出宠物、失败后果、背包展示。</li><li>不含：宠物技能、养成、战斗数值。</li></ul></div></div>
+<div class="card"><h2>演示</h2><div class="zoom stage s1" data-z><div class="t">点按使用 · 飞出 · 吸入 · 摇三下 · 咔嚓 · 显影</div><div class="ball"></div><div class="pet"></div><div class="flash"></div><div class="polaroid"><div class="ph"><i></i></div><div class="nm">小绿团</div></div></div><div class="cap">循环演示，单击放大</div></div>
+</section>
+
+<section class="page" data-t="抓宠流程">
+<div class="card"><h2>流程图</h2>
+<div class="zoom stage" data-z style="height:230px;background:var(--paper2)"><svg viewBox="0 0 900 200" width="100%" height="100%" class="flow">
+<defs><marker id="ar" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0 0L8 4L0 8z" fill="#776656" style="animation:none;stroke-dasharray:none"/></marker></defs>
+<g fill="#FBF6EC" stroke="#2C241E" stroke-width="2"><rect x="10" y="70" width="110" height="56" rx="12"/><rect x="170" y="70" width="110" height="56" rx="12"/><rect x="330" y="70" width="110" height="56" rx="12"/><rect x="490" y="70" width="110" height="56" rx="12"/><rect x="650" y="20" width="120" height="56" rx="12" fill="#D7EEE6"/><rect x="650" y="124" width="120" height="56" rx="12" fill="#FBD9D2"/></g>
+<g fill="none" stroke="#776656" stroke-width="2.4" marker-end="url(#ar)"><path d="M120 98H168"/><path d="M280 98H328"/><path d="M440 98H488"/><path d="M600 90L648 56"/><path d="M600 106L648 150"/></g>
+<g font-size="15" text-anchor="middle" fill="#2C241E"><text x="65" y="103">点按使用</text><text x="225" y="103">锁定目标</text><text x="385" y="103">掷球吸入</text><text x="545" y="103">摇晃三次</text><text x="710" y="53">咔嚓出相纸</text><text x="710" y="157">挣脱 · 狂暴</text></g></svg></div></div>
+<div class="card"><h2>触发与结束条件</h2><table><tr><th>阶段</th><th>触发条件</th><th>结束条件</th></tr>
+<tr><td>点按使用</td><td>背包或快捷栏点按精灵球；3 米内存在可捕捉宠物</td><td>球离手；范围内无目标则不消耗，提示「附近没有宠物」</td></tr>
+<tr><td>锁定目标</td><td>自动选最近的可捕捉宠物，同距离取血量最低</td><td>目标锁定，头顶出现准星</td></tr>
+<tr><td>掷球吸入</td><td>球命中目标，约 0.5 秒</td><td>宠物被吸入球内，期间无敌</td></tr>
+<tr><td>摇晃三次</td><td>每次摇晃独立判定一次，间隔 0.7 秒</td><td>三次全过为成功，任意一次失败即挣脱</td></tr>
+<tr><td>成功</td><td>三次判定全部通过</td><td>闪光，相纸吐出，约 3 秒显影完成，进入背包</td></tr>
+<tr><td>失败</td><td>任意一次未通过</td><td>球破碎，宠物进入狂暴 8 秒，之后恢复普通</td></tr></table></div>
+<div class="note">使用中不被打断：移动不影响掷球；被命中只打断瞄准，不打断摇晃判定。数值均为初始值，进游戏可调。</div>
+</section>
+
+<section class="page" data-t="捕获率">
+<div class="card"><h2>公式</h2><p>单次摇晃通过率 = 基础率 × 球系数 × 血量系数 × 状态系数，上限 95%，三次独立判定。整体成功率约为单次率的三次方。</p></div>
+<div class="grid">
+<div class="card"><h2>精灵球品质</h2><table><tr><th>档位</th><th>球系数</th><th>获取</th></tr>
+<tr><td><span class="q" style="background:var(--q1)"></span>普通</td><td>1.0</td><td>常见搜刮</td></tr>
+<tr><td><span class="q" style="background:var(--q2)"></span>高级</td><td>1.5</td><td>稀有搜刮</td></tr>
+<tr><td><span class="q" style="background:var(--q4)"></span>大师</td><td>必中</td><td>极稀有，整局最多 1 个</td></tr></table></div>
+<div class="card"><h2>目标状态</h2><table><tr><th>条件</th><th>系数</th></tr><tr><td>满血</td><td>0.5</td></tr><tr><td>血量低于一半</td><td>1.0</td></tr><tr><td>血量低于 20%</td><td>1.6</td></tr><tr><td>睡眠或眩晕</td><td>×1.5</td></tr><tr><td>狂暴中</td><td>×0.7</td></tr></table></div></div>
+<div class="card"><h2>基础率（按宠物稀有度）</h2><table><tr><th>稀有度</th><th>基础率</th><th>例</th></tr><tr><td>常见</td><td>85%</td><td>小绿团</td></tr><tr><td>少见</td><td>70%</td><td>待定</td></tr><tr><td>稀有</td><td>55%</td><td>待定</td></tr></table>
+<p class="cap" style="text-align:left">例：普通球抓低于一半血的常见宠物，单次 85% × 1.0 × 1.0 = 85%，整体约 61%。满血则单次 42%，整体约 7%，会鼓励先削血。</p></div>
+</section>
+
+<section class="page" data-t="拍立得包装">
+<div class="card"><h2>两层包装</h2><p>未使用时是一盒胶片，使用并捕获后变成一张相纸。包装就是状态，不需要额外图标区分有无宠物。</p></div>
+<div class="grid">
+<div class="card"><h3>未使用：胶片盒</h3><div class="zoom stage" data-z><div class="film"><div class="band"></div><div class="win"><div class="ball"></div></div><b>精灵球</b><br>普通 · 1 张</div></div><div class="cap">盒盖色带表示品质，球在窗口里轻轻晃</div></div>
+<div class="card"><h3>已捕获：拍立得相纸</h3><div class="zoom stage" data-z><div class="polaroid" style="opacity:1;transform:rotate(-3deg)"><div class="ph"><i style="filter:none;background:#8FD3A8"></i></div><div class="nm">小绿团</div></div></div><div class="cap">白边写名字，边框条纹随品质变色</div></div></div>
+<div class="card"><h2>相纸信息</h2><table><tr><th>位置</th><th>内容</th></tr><tr><td>照片区</td><td>宠物被捕获瞬间的定格</td></tr><tr><td>下白边</td><td>手写体名字、稀有度星、捕获日期</td></tr><tr><td>右下角</td><td>用了哪档球的小印章</td></tr><tr><td>稀有宠物</td><td>相纸带反光闪膜，转动背包时有高光扫过</td></tr></table></div>
+<div class="card"><h2>演出节奏</h2><ul><li>成功：球弹开，白闪 0.1 秒，相纸从球底吐出，显影 3 秒，期间可点按跳过。</li><li>相纸落入背包时自动贴到图鉴墙或收藏格。</li><li>放出宠物：点按相纸，撕下一角，宠物从照片里跳出，相纸变成空白留在背包。</li></ul></div>
+</section>
+
+<section class="page" data-t="背包与放出">
+<div class="card"><h2>背包规则</h2><ul><li>相纸占一格，不叠加，同一宠物多张分开显示。</li><li>初始随身最多带 3 张相纸，超出必须放回仓库。</li><li>空白相纸可回收，换回 1 个普通精灵球的材料。</li></ul></div>
+<div class="card"><h2>放出宠物</h2><ul><li>点按相纸即放出，只支持点按，不支持长按。</li><li>长按已用于轮盘切换，不再占用。</li><li>放出后宠物跟随玩家，死亡则相纸变灰，局内不可再用。</li></ul></div>
+<div class="card"><h2>失败相关</h2><ul><li>球破碎不返还。</li><li>狂暴宠物对玩家造成少量伤害，8 秒后回到普通状态，可再抓。</li><li>同一只宠物最多尝试 3 次，用完后逃走。</li></ul></div>
+</section>
+
+<section class="page" data-t="待拍板">
+<div class="card"><h2>需要一起定的事</h2><ol>
+<li>相纸是随身占位的道具，还是只进入图鉴不占背包。我先按占 1 格做。</li>
+<li>放出的宠物能不能参战，还是只做陪伴。本版先不含战斗。</li>
+<li>三次摇晃判定是否要玩家参与，比如点按配合节奏。初始版先全自动。</li>
+<li>大师球的整局上限 1 个是否合适。</li>
+<li>局外是否保留相纸，还是只在局内有效。</li></ol></div>
+<div class="note">方案通过后，我再出美术素材清单：胶片盒、相纸、球体、闪光、显影动画、宠物剪影。</div>
+</section>
+<div id="lb"><div class="box"></div></div>
+<script>
+const pages=[...document.querySelectorAll('.page')],tabs=document.getElementById('tabs');
+pages.forEach((p,i)=>{const b=document.createElement('button');b.textContent=p.dataset.t;if(!i)b.className='on';b.onclick=()=>{pages.forEach(x=>x.classList.remove('on'));p.classList.add('on');[...tabs.children].forEach(x=>x.classList.remove('on'));b.classList.add('on');scrollTo(0,0)};tabs.appendChild(b)});
+const lb=document.getElementById('lb');document.querySelectorAll('[data-z]').forEach(e=>e.onclick=()=>{const c=e.cloneNode(true);c.classList.remove('zoom');c.removeAttribute('data-z');lb.firstElementChild.replaceChildren(c);lb.classList.add('on')});
+lb.onclick=()=>lb.classList.remove('on');
+</script></div></body></html>
