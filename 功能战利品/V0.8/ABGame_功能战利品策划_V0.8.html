@@ -762,6 +762,8 @@ Object.assign(window.IMG,{"img/b-lotus.webp": "data:image/webp;base64,UklGRvYQAw
 
   /* ---------- V0.7 红色大招：大场面特效元素 ---------- */
   const bid = () => 'b' + (++uid);
+  D.petals = () => `<ellipse rx="220" ry="42" fill="#FFD8E9" opacity=".65"/>` + Array.from({ length: 56 }, (_, i) => `<ellipse cx="${(i * 71 % 420) - 210}" cy="${(i * 37 % 64) - 32}" rx="9" ry="4" fill="${['#FF9BC5', '#FFF1F7', '#E4B6FF'][i % 3]}" transform="rotate(${i % 2 ? 8 : -8})" class="glow"/>`).join('');
+  D.discoball = () => `<path d="M0 -90V-30" stroke="#D2DFFF" stroke-width="3"/><g class="glow"><circle r="30" fill="#C3DCFF" stroke="#fff" stroke-width="2"/><ellipse rx="14" ry="30" fill="none" stroke="#775ACB" stroke-width="3"/><path d="M-28 -12H28M-30 0H30M-28 12H28M0 -30V30" stroke="#775ACB" stroke-width="3"/></g>`;
   // 全画布遮罩：vign 0,-244 （x/y 抵消到画布左上角）
   D.vign = o => `<rect x="0" y="0" width="${o.w || 640}" height="${o.h || 280}" fill="${o.c || '#05070B'}" opacity="${o.a || .6}"/>`;
   D.flash = o => `<rect x="0" y="0" width="${o.w || 640}" height="${o.h || 280}" fill="${o.c || '#FFFFFF'}"/>`;
@@ -2408,9 +2410,9 @@ window.TOY_BACKUP = [
 ];
 
 
-/* V0.7 新方向：红色大招（强视觉冲击）· 6 选 1 候选。全部用现有红色玩具模型 */
+/* 红色大招（强视觉冲击）· 8 个候选，复用现有玩具模型 */
 (function () {
-  const REC = { r1: { date: '11-16', title: '新增方向（V0.7）· 待评审', notes: ['需要一件强视觉冲击、类似“放莲花”的表现型道具，从现有红色玩具里挑', '多给几个备选'], change: ['从 15 件红色玩具里挑出 6 件做成候选，评审 6 选 1（也可多选）'] } };
+  const REC = { r1: { date: '11-16', title: '新增方向（V0.7）· 待评审', notes: ['需要一件强视觉冲击、类似“放莲花”的表现型道具，从现有红色玩具里挑', '多给几个备选'], change: ['原有 6 个候选，新增花瓣绒毯 / 霓虹舞厅，共 8 个；新增方向评审二选一或都保留'] } };
   const B = [
 /* ---------------------------------------------------------------- 1 霓虹莲台 */
 {
@@ -2636,6 +2638,58 @@ window.TOY_BACKUP = [
   dev: 3,
 },
   ];
+
+  B.push(
+    {
+      id: 'petals', toy: 'bayinhe', toyName: '八音盒', origin: 'toy', name: '花瓣绒毯', en: 'Petal Picnic', pillar: 'moment', burst: true, score: [2, 5, 3],
+      vfx: 4, value: 220000, grid: '2×2', pick: '', dev: 3,
+      pitch: '轻抛八音盒，粉白花瓣沿地板一圈圈铺满：可爱浪漫、女性友好的非暴力花海，陪队友喘口气。',
+      hook: '地板开满花瓣，温柔花海为小队缓慢恢复',
+      meta: { size: '2×2', cast: '点按 · 抛向前方 2m', res: '一次性 · 用后变「谢幕八音盒」', cd: '花毯持续 8s', target: '半径 5m 内自己 / 队友' },
+      fun: [['温柔绽放', '粉白花瓣贴地展开，柔光与旋律替代爆炸。'], ['战后小憩', '每秒回复 2 点生命，每人最多 16 点。'], ['不是安全岛', '不推怪、不免抓取、不保护读条，仍需掩护。']],
+      scene: { dur: 7, alt: '八音盒抛出，花瓣铺满地板，队友踏入花海恢复生命', els: `toy 320,-12 src:bayinhe sz:44 k:0,-130,-40,0;12,-130,-40,1;26,0,0,1;92,,,1;98,,,0|
+        petals 320 k:0,,,0,,0.05;25,,,0,,0.05;42,,,1,,1;90,,,1;98,,,0|
+        sparks 320,-80 k:0,,,0;32,,,1;90,,,1;98,,,0|
+        fish 160 me label:你 k:0;40;60,100;90,100;100,0|
+        pig 470 ally f label:队友 k:0;40;60,-80;90,-80;100,0|
+        plus 260,-90 k:0,,,0;55,,,0;60,,,1;88,,,1;95,,,0|
+        plus 390,-90 k:0,,,0;55,,,0;60,,,1;88,,,1;95,,,0|
+        hud 320,-200 t:花瓣绒毯 · 每秒回复 2 点 k:0,,,0;44,,,1;90,,,1;96,,,0` },
+      boards: [[18, '轻抛八音盒'], [45, '花瓣贴地铺开'], [75, '踏入花海缓慢恢复']],
+      flow: ['点按 → 0.3s 抛出八音盒', '蓄势 0.6s，花瓣在 0.8s 内铺满地板', { q: '谁在花毯上？', branches: [['自己 / 队友', ['每秒回复 2 点，满血不溢出']], ['对手 / 怪物', ['只有表现，无增益、伤害或控制']]] }, '8s 后淡出，变普通玩具（价值 ×30%）'],
+      scenarios: [['休整', '队友聚在花毯补血。', 'petals 160|fish 110 me|pig 210 ally|plus 110,-90'], ['掩护', '花毯不挡怪。', 'petals 160|rabbit 140 me|monster 290 f'], ['合影', '浪漫花海，不锁镜头。', 'petals 160|fish 120 me|pig 210 ally|sparks 160,-100']],
+      params: { head: '参数', rows: [['半径', '5m'], ['持续', '8s'], ['回复', '2 点 / 秒；每人最多 16 点'], ['用后价值', '普通玩具，价值 ×30%']] },
+      rules: ['不复活、不净化、不免伤，不保护读条；离开即停止回复，同类回复不叠加。', '同一时刻全图只能有 1 个红色大招；只出在金库 / Boss 区。', '与霓虹舞厅是同一需求的两个方向，评审二选一或都保留。'],
+      counters: ['怪物照常进入，不能当莲台安全岛。', '离开花瓣边界即失去回复。'],
+      req: { 程序: ['队伍范围判定、定时回复与上限'], 美术: ['复用八音盒模型，红色功能版本换色；粉白花瓣贴片'], 动效: ['花毯径向展开、柔光淡出'], 音效: ['轻柔八音盒旋律'], UI: ['边界、回复提示、全图播报'], 关卡: ['贴合可行走地面，不穿楼层'] },
+    },
+    {
+      id: 'disco', toy: 'cdji', toyName: 'CD 机', origin: 'toy', name: '霓虹舞厅', en: 'Neon Disco Hall', pillar: 'moment', burst: true, score: [5, 5, 4],
+      vfx: 5, value: 280000, grid: '2×2', pick: '', dev: 4,
+      pitch: '广场舞 CD 的红色升级版：迪斯科灯球升起，整个场景压暗，霓虹灯、旋转反射光斑和音乐把房间变成舞厅，玩家与怪物一起开跳！',
+      hook: '广场舞升级：霓虹灯 + 迪斯科灯球，整个场景变舞厅',
+      meta: { size: '2×2', cast: '点按 · 放在脚下', res: '一次性 · 用后变「谢幕 CD 机」', cd: '舞厅持续 8s', target: '半径 8m 内玩家 / 怪物' },
+      fun: [['场景变舞厅', '压暗环境、灯球升空、霓虹灯柱和反射光斑跟着节拍转。'], ['全员开跳', '包括施放者，先原地跳，再边走边扭；怪物忘记追人。'], ['升级演出而非强控', '玩家强制跳舞仍为 2.5s，不伤玩家。']],
+      scene: { dur: 8, alt: '灯球升空，房间压暗，霓虹灯与反射光斑点亮舞池，玩家和怪物跳舞', els: `vign 0,-244 a:.65 k:0,,,0;15,,,0;25,,,1;90,,,1;98,,,0|
+        rays 320,-155 c:#79EDFF k:0,,,0;26,,,0;32,,,1;90,,,1;98,,,0|
+        pillar 120 w:80 h:230 c:#FF70CA k:0,,,0;25,,,1;90,,,1;98,,,0|
+        pillar 520 w:80 h:230 c:#6DDEFF k:0,,,0;25,,,1;90,,,1;98,,,0|
+        discoball 320,-180 k:0,0,140,0;15,0,140,1;32,0,0,1;90,,,1;98,,,0|
+        sparks 320,-40 k:0,,,0;25,,,1;90,,,1;98,,,0|
+        toy 320 src:cdji sz:45|
+        fish 190 me label:你 k:0;28;36,0,0,1,-12;44,0,0,1,12;52,0,0,1,-12;60,0,0,1,12;72,40,0,1,-12;90,70,0,1,12;100,0,0,1,0|
+        pig 430 foe f label:对手 k:0;28;36,0,0,1,12;44,0,0,1,-12;52,0,0,1,12;60,0,0,1,-12;90,0,0,1,12;100,0,0,1,0|
+        monster 80 k:0;28;36,0,0,1,-12;44,0,0,1,12;52,0,0,1,-12;60,0,0,1,12;90,0,0,1,-12;100,0,0,1,0|
+        hud 320,-200 t:霓虹舞厅 · 全场一起跳！ k:0,,,0;30,,,1;90,,,1;98,,,0` },
+      boards: [[16, '放下 CD 机，房间压暗'], [40, '灯球升空，霓虹灯亮起'], [75, '玩家与怪物一起跳舞']],
+      flow: ['点按 → 0.4s 放下 CD 机', '预警 0.6s，灯球升起、舞池边界出现，场景切换舞厅灯光和音乐', { q: '谁在舞池里？', branches: [['玩家（包括自己 / 队友）', ['首次进入原地跳舞 2.5s，之后可正常操作，仅叠加上半身舞蹈']], ['怪物', ['跳舞、丢失仇恨，受击立即恢复；Boss 不受控']], ['耳机 / 撤离读条 / 整蛊免疫玩家', ['不受强制跳舞影响']]] }, '8s 后灯光音乐恢复，变普通 CD 机（价值 ×30%）'],
+      scenarios: [['派对脱身', '怪物跳舞时寻找出口。', 'discoball 160,-150|monster 70 r12|fish 230 me|rays 160,-150'], ['耳机免疫', '戴耳机照常行动。', 'discoball 160,-150|rabbit 120 me|toy 123,-44 src:toudaierji sz:28|pig 240 foe r12'], ['绕开舞池', '看见霓虹边界即可避开。', 'shock 160 r:100 c:#79EDFF|fish 290 me|toy 160 src:cdji sz:38']],
+      params: { head: '参数', rows: [['半径', '8m'], ['持续', '8s'], ['玩家强控', '2.5s，每次大招每人最多一次'], ['舞后免疫', '4s，和广场舞 CD 共用'], ['伤害', '0'], ['用后价值', '普通玩具，价值 ×30%']] },
+      rules: ['与花瓣绒毯是同一需求的两个方向，评审二选一或都保留；不替换现有广场舞 CD。', '同一时刻全图只能有 1 个红色大招；只出在金库 / Boss 区。', '离开舞池立即解除，重进不重复强控；与广场舞 CD 共用整蛊免疫。', '撤离读条免疫；Boss 只参与灯光演出。玩法范围不穿墙、不跨楼层。', '减少闪光模式保留柔光、边界，不频闪；结束还原原场景照明。'],
+      counters: ['头戴耳机免疫；预警时离开舞池。', '舞池固定，出圈解除；怪物受击提前结束跳舞。'],
+      req: { 程序: ['复用 CD 控制与免疫、场景灯光覆盖及还原'], 美术: ['复用 CD 机模型，红色功能版本换色；镜面灯球'], 动效: ['灯球升降、霓虹灯柱、旋转反射光斑、全身及上半身舞蹈'], 音效: ['8s 派对音乐、谢幕音效'], UI: ['预警边界、全图播报、减少闪光选项'], 关卡: ['房间灯光适配、离开场景恢复照明'] },
+    },
+  );
   B.forEach(it => { it.rec = REC; it.home = 'burst'; });
   window.BURST = B;
   window.SHELF = (window.SHELF || []).concat(B);
@@ -3270,7 +3324,7 @@ window.TOY_BACKUP = [
     { g: '评审', c: '#C23B6E', items: [['review', '评审汇总', '★']] },
     { g: '总览', items: [['overview', '设计总览', '01'], ['rules', '通用规则', '02'], ['control', '单键操作方案', '03']] },
     ...PK.map(k => ({ g: P[k].name, c: P[k].color, items: ITEMS.filter(i => i.pillar === k).map(i => [i.id, i.name]) })),
-    { g: '红色大招 · 待评审', c: '#E0334E', items: [['burst', '六选一 · 对比', '★'], ...SHELF.filter(i => i.shelf === 'burst').map(i => [i.id, i.name])] },
+    { g: '红色大招 · 待评审', c: '#E0334E', items: [['burst', '八个候选 · 对比', '★'], ...SHELF.filter(i => i.shelf === 'burst').map(i => [i.id, i.name])] },
     { g: '备选', c: '#8A7C70', items: SHELF.filter(i => i.shelf !== 'burst').map(i => [i.id, i.name]) },
     { g: '落地', items: [['balance', '投放与排期', '04'], ['todo', '待确认', '05']] },
   ];
@@ -3571,13 +3625,13 @@ window.TOY_BACKUP = [
   const stars = n => '<span class="bstar">' + '★'.repeat(n) + '<i>' + '★'.repeat(5 - n) + '</i></span>';
   const wan = v => (v / 10000).toFixed(v >= 1e6 ? 0 : 1) + ' 万';
   function burstStrip(it) {
-    return `<div class="bstrip"><img src="${IM(it.art)}" alt="${it.name}大招概念图" loading="lazy"><div><p class="eyebrow" style="color:#FF8FA3">红色大招 · ${it.toyName} · 价值约 ${wan(it.value)}</p><h3>${it.hook}</h3>
+    return `<div class="bstrip"><img src="${it.art ? IM(it.art) : toyImg(it.toy)}" alt="${it.name}${it.art ? '大招概念图' : '玩具模型参考'}" loading="lazy"><div><p class="eyebrow" style="color:#FF8FA3">红色大招 · ${it.toyName} · 价值约 ${wan(it.value)}</p><h3>${it.hook}</h3>
       <div class="bkv"><span><b>视觉冲击</b>${stars(it.vfx)}</span><span><b>开发难度</b>${stars(it.dev)}</span><span><b>用后</b>变普通玩具（价值 ×30%）</span></div></div></div>`;
   }
   function burstPage() {
     const L = BURST;
     const card = it => `<div class="card bcard">${it.pick ? `<span class="bpick">${BX[it.pick]}</span>` : ''}<span data-rvbadge="${it.id}" class="rvb-abs">${rvBadge(it.id)}</span>
-      <div class="bimg"><img src="${IM(it.art)}" alt="${it.name}概念图" loading="lazy"><img class="btoy" src="${toyImg(it.toy)}" alt="${it.toyName}"></div>
+      <div class="bimg"><img src="${it.art ? IM(it.art) : toyImg(it.toy)}" alt="${it.name}${it.art ? '概念图' : '玩具模型参考'}" loading="lazy"><img class="btoy" src="${toyImg(it.toy)}" alt="${it.toyName}"></div>
       <a class="bbody" href="#${it.id}"><h3>${it.name}<small>${it.toyName}</small></h3><p class="bhook">${it.hook}</p><p class="small muted">${it.pitch}</p>
       <div class="bkv"><span><b>冲击</b>${stars(it.vfx)}</span><span><b>开发</b>${stars(it.dev)}</span><span><b>价值</b>${wan(it.value)}</span></div><span class="bmore">看完整方案 →</span></a></div>`;
     // 冲击 × 开发 矩阵
@@ -3588,7 +3642,7 @@ window.TOY_BACKUP = [
       <path d="M50 300 H620 M50 300 V20" stroke="#6B7585" stroke-width="2"/>${[1, 2, 3, 4, 5].map(d => `<text x="${px(d)}" y="320" font-size="12" fill="#9AA3B2" text-anchor="middle">${d}</text>`).join('')}
       <text x="620" y="292" font-size="12" fill="#9AA3B2" text-anchor="end">开发难度 →</text><text x="58" y="16" font-size="12" fill="#9AA3B2">视觉冲击 ↑</text>
       ${[3, 4, 5].map(v => `<text x="40" y="${py(v)}" font-size="12" fill="#9AA3B2" text-anchor="end">${v}</text>`).join('')}`;
-    const matrix = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="六个大招：视觉冲击与开发难度对比">${axes}${dots}</svg>`;
+    const matrix = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="八个大招：视觉冲击与开发难度对比">${axes}${dots}</svg>`;
     // 通用节奏
     const beat = `<svg viewBox="0 0 640 170" role="img" aria-label="红色大招通用演出节奏：点按、蓄势、爆发、持续、收尾">
       <rect width="640" height="170" rx="14" fill="#161C26"/>
@@ -3597,9 +3651,9 @@ window.TOY_BACKUP = [
       <text x="24" y="156" font-size="12" fill="#9AA3B2">统一规则：不伤玩家 · 全图同一时刻只有 1 个大招 · 只出在金库 / Boss 区</text></svg>`;
     const rows = L.map(it => `<tr><td><a href="#${it.id}" style="display:inline-flex;align-items:center;gap:6px"><img src="${toyImg(it.toy)}" alt="" style="width:28px;height:28px">${it.name}</a></td><td>${it.meta.target}</td><td>${it.meta.cd}</td><td>${stars(it.vfx)}</td><td>${stars(it.dev)}</td><td>${wan(it.value)}</td></tr>`).join('');
     return `<div class="page">
-      <p class="eyebrow" style="color:#E0334E">V0.7 新方向 · 待评审</p><h1>红色大招 · 六选一</h1>
-      <p class="muted small" style="margin-top:8px;max-width:780px">参考“放莲花”：一按就是全屏大场面。全部用现有红色玩具，点按即放（自动对准），用完变回普通玩具。评审挑 1–2 件进 CE2.0，采纳后自动归入「高光」。</p>
-      <section class="sec">${secH('1', '六个候选', '点卡片看完整方案')}<div class="grid g3 bgrid">${L.map(card).join('')}</div></section>
+      <p class="eyebrow" style="color:#E0334E">V0.8 新增花瓣 / 舞厅方向 · 待评审</p><h1>红色大招 · 八个候选</h1>
+      <p class="muted small" style="margin-top:8px;max-width:780px">参考“放莲花”：一按就是全屏大场面。复用现有玩具模型（新增红色功能版本），点按即放（自动对准），用完变回普通玩具。评审挑 1–2 件进 CE2.0，采纳后自动归入「高光」。花瓣绒毯与霓虹舞厅可二选一或都保留。</p>
+      <section class="sec">${secH('1', '八个候选', '点卡片看完整方案')}<div class="grid g3 bgrid">${L.map(card).join('')}</div></section>
       <section class="sec">${secH('2', '怎么选', '视觉冲击 × 开发难度')}<div class="grid g2" style="align-items:start"><div class="card svgcard">${matrix}</div><div class="card svgcard">${beat}</div></div></section>
       <section class="sec">${secH('3', '参数对比', '')}<div class="card" style="overflow-x:auto"><table class="ptable"><thead><tr><th>大招</th><th>范围</th><th>持续</th><th>冲击</th><th>开发</th><th>玩具价值</th></tr></thead><tbody>${rows}</tbody></table></div></section>
       <section class="sec">${secH('4', '其余红色玩具', '这次没选，后续可继续拓展')}<div class="grid g4">${[['jinsefatiao', '金色发条', '拧一圈：全场时间倒流 3s'], ['zhedieshouji', '折叠手机', '“打开”成巨大屏幕，全图直播你的位置换奖励'], ['tuomagezi', '拓麻歌子', '孵出电子宠物，长成巨兽陪你 30s'], ['qianmingzuqiuxie', '签名足球鞋', '一脚抽射，全屏慢镜射门'], ['jianshenjiangbei', '健身奖杯', '举杯：全队金身 5s'], ['yaokongtanke', '遥控坦克', '开着坦克横冲直撞'], ['bijibendiannao', '笔记本电脑', '黑进监控：全图怪物 / 宝箱高亮'], ['huabanche', '滑板车', '冲刺漂移，身后拖出一道彩虹']].map(([k, n, d]) => `<div class="card bk"><img src="${toyImg(k)}" alt="${n}"><div><h3>${n}</h3><p>${d}</p></div></div>`).join('')}</div></section>
@@ -3717,6 +3771,7 @@ window.TOY_BACKUP = [
   }
   function todo() {
     const qs = [
+      ['大红 / 大金拾取后的检视动画（低优先级）', '是否在捡到红色 / 金色高价值物品后播放检视动画？任何移动立即打断，不影响正常行动；低优先级，先放待确认，后面沟通。'],
       ['功能战利品能否局外带入？', '当前按现有规则：开局背包 = 局外带入，规则一致。是否限制每局只能带 1 件整蛊类？'],
       ['粘粘拍按格随机，还是按价值加权？', '当前按格随机（品质 ≤ 紫色），惊喜更多；按价值加权更刺激但挫败更大。'],
       ['被偷的物品撤离后，原主人是否有补偿？', '例如结算页显示“失窃记录”，局外可发布“悬赏委托”。'],
