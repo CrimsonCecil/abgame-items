@@ -1,9 +1,14 @@
 {
   "name": "abgame-online-reviews",
   "main": "worker.mjs",
-  "compatibility_date": "2025-10-31",
+  "compatibility_date": "2026-11-20",
   "workers_dev": false,
   "preview_urls": false,
+  "observability": {
+    "enabled": true,
+    "logs": { "enabled": true },
+    "traces": { "enabled": true, "head_sampling_rate": 0.01 }
+  },
   "d1_databases": [{
     "binding": "REVIEWS",
     "database_name": "abgame-online-reviews",
