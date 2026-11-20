@@ -889,7 +889,7 @@ function flushKF(){if(!KF)return;const s=document.createElement('style');s.textC
 function fit(root){(root||document).querySelectorAll('.stw').forEach(s=>{const w=s.clientWidth;if(w)s.firstElementChild.style.transform=`scale(${w/360})`;});}
 function freeze(root){root.querySelectorAll('.stw[data-fz]').forEach(s=>{const f=+s.dataset.fz;s.getAnimations({subtree:true}).forEach(a=>{a.pause();const d=a.effect.getComputedTiming().duration;if(d>=3000)a.currentTime=f*d;});});}
 let cur='';
-const ENVK=(location.protocol==='file:'||/github\.io$/.test(location.hostname))?'l':(/workbuddy\.host$/.test(location.hostname)?'w':'p');
+const ENVK=(ABGameReview.online||location.protocol==='file:'||/github\.io$/.test(location.hostname))?'l':(/workbuddy\.host$/.test(location.hostname)?'w':'p');
 function applyEnv(el){el.querySelectorAll('a[data-l]').forEach(a=>{const h=a.getAttribute('data-'+ENVK);if(!h){a.style.display='none';return;}a.setAttribute('href',h);});}
 function navHtml(){const c=rvCount();
   const grp=s=>{const a=W.filter(w=>stOf(w.k)===s);return `<div class="g wl" style="color:${rvColor(s)}">${rvName(s)} · ${a.length}</div>${[1,2,3,4,5,6].map(q=>{const b=a.filter(w=>w.qp===q);return b.length?`<div class="wl ql q${q}"><span class="qt q${q}">${QN[q]}</span><small>${b.length}</small></div>`+b.map(w=>`<a class="wl${cur===w.k?' on':''}" href="#${w.k}">${img0(w.k)}${w.n}<i class="dot" style="background:${s?rvColor(s):'transparent'};border-color:${rvColor(s)}"></i></a>`).join(''):''}).join('')}`;};
@@ -972,7 +972,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeLb();
 route();
 
 })();</script>
-<script>(function(){var E=(location.protocol==='file:'||/github\.io$/.test(location.hostname))?'l':(/workbuddy\.host$/.test(location.hostname)?'w':'p');
+<script>(function(){var E=(ABGameReview.online||location.protocol==='file:'||/github\.io$/.test(location.hostname))?'l':(/workbuddy\.host$/.test(location.hostname)?'w':'p');
 var sc=new URLSearchParams(location.search).get('sharecode'),fr=false;try{fr=window.top!==window.self}catch(e){fr=true}
 document.querySelectorAll('a[data-l]').forEach(function(a){var h=a.getAttribute('data-'+E);
 if(!h){a.style.display='none';return;}
