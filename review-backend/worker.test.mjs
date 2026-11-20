@@ -35,6 +35,15 @@ test('serves shared reviews without a login or cookie', async () => {
   assert.equal(response.headers.get('Set-Cookie'), null);
 });
 
+test('isolates V0.4 photo-catch reviews from the flat fallback', async () => {
+  const env = database();
+  assert.deepEqual(await get(env, 'pellet-v4'), { status: [], notes: [], scores: [] });
+  await post(env, 'pellet-v4', { t: 'add', id: 's2', note: { id: 'fps-1', text: '三次摇晃', at: 10 } });
+  assert.deepEqual((await get(env, 'pellet-v4')).notes.map(r => r.body), ['三次摇晃']);
+  assert.deepEqual((await get(env, 'pellet-v3')).notes, []);
+  assert.equal((await app.fetch(req('pellet-v4', { t: 'del', id: 's2', nid: 'fps-1' }), env)).status, 400);
+});
+
 test('rejects cross-origin or invalid writes', async () => {
   const env = database();
   const op = { t: 'status', id: 'bat', at: 10, status: 'adopt' };
