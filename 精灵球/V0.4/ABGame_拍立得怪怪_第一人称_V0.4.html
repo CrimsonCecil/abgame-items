@@ -1,0 +1,144 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="../../favicon.ico"><title>ABGame · 拍立得怪怪 · 第一人称 V0.4</title><style>
+:root{--bg:#F2E9DA;--paper:#FBF6EC;--paper2:#F6EEDF;--ink:#2C241E;--muted:#776656;--line:#E3D5C0;--red:#E4503F;--mint:#2A9E86;--gold:#D8941A;--night:#1F2734;
+--q0:#D9D5CC;--q1:#6CC870;--q2:#4F9BEA;--q3:#A86CE2;--q4:#F2B53A;--q5:#E4503F;
+--font:'Noto Sans SC','PingFang SC','Microsoft YaHei',sans-serif}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:16px;line-height:1.65}
+.layout{display:grid;grid-template-columns:232px minmax(0,1fr);max-width:1280px;margin:0 auto}
+.review-entry{position:fixed;right:16px;bottom:16px;z-index:5;padding:7px 14px;border-radius:99px;background:var(--ink);color:#fff;text-decoration:none}
+.doc-review{margin-top:22px;padding:16px;background:var(--paper);border:1.5px solid var(--line);border-radius:16px}
+.doc-review form{display:grid;gap:8px}.doc-review textarea{width:100%;min-height:82px;resize:vertical}
+.doc-review textarea,.doc-review select{padding:7px 10px;border:1px solid var(--line);border-radius:9px;font:inherit}
+.doc-review button{justify-self:start;padding:7px 14px;border:0;border-radius:9px;background:var(--ink);color:#fff;font:inherit;cursor:pointer}
+.doc-review button:disabled{opacity:.45;cursor:default}.doc-review ul{list-style:none;padding:0}
+.doc-review li{border-top:1px solid var(--line);padding:8px 0}.doc-review li p{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+.doc-review time,.doc-review [role="status"]{color:var(--muted);font-size:.86em}
+/* 竖向目录 */
+aside{position:sticky;top:0;align-self:start;height:100vh;overflow:auto;padding:22px 14px 22px 18px;border-right:1.5px dashed var(--line)}
+.brand{display:flex;gap:10px;align-items:center;margin-bottom:14px}
+.brand i{width:40px;height:40px;border-radius:12px;background:var(--ink);color:var(--paper);display:grid;place-items:center;font-style:normal;font-weight:800;font-size:15px}
+.brand b{display:block;font-size:17px;line-height:1.2}.brand span{font-size:13px;color:var(--muted)}
+.toc-t{font-size:13px;color:var(--muted);margin:14px 6px 6px}
+nav.toc{display:flex;flex-direction:column;gap:3px;position:relative}
+nav.toc a{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:12px;color:var(--ink);text-decoration:none;font-size:15px}
+nav.toc a em{font-style:normal;font-size:12px;width:26px;height:22px;border-radius:7px;background:var(--paper2);border:1px solid var(--line);display:grid;place-items:center;color:var(--muted);flex:none}
+nav.toc a:hover{background:var(--paper)}
+nav.toc a.on{background:var(--ink);color:var(--paper)}
+nav.toc a.on em{background:rgba(255,255,255,.16);border-color:transparent;color:var(--paper)}
+.side-note{margin-top:16px;font-size:13px;color:var(--muted);padding:10px;border:1px dashed var(--line);border-radius:12px;background:var(--paper)}
+main{padding:26px 30px 90px;min-width:0}
+header.top{background:var(--night);color:#fff;border-radius:22px;padding:26px 30px;display:grid;grid-template-columns:1fr 190px;gap:18px;align-items:center;margin-bottom:26px}
+header.top small{letter-spacing:.2em;color:#8FE3CF;font-size:13px}
+header.top h1{margin:6px 0 6px;font-size:34px;line-height:1.25}
+header.top p{margin:0;color:#CFD6E2}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.chip{font-size:13px;padding:3px 12px;border-radius:99px;border:1px solid rgba(255,255,255,.3);color:#E8ECF3}
+header.top svg{width:100%;height:auto}
+section{scroll-margin-top:16px;margin-bottom:34px}
+h2{font-size:23px;margin:0 0 12px;display:flex;align-items:center;gap:10px}
+h2 em{font-style:normal;background:var(--ink);color:var(--paper);font-size:14px;border-radius:8px;padding:1px 9px}
+h2 span{font-size:14px;font-weight:400;color:var(--muted)}
+h3{font-size:16px;margin:0 0 6px}
+.card{background:var(--paper);border:1.5px solid var(--line);border-radius:18px;padding:16px 18px;box-shadow:0 8px 24px -18px rgba(60,40,20,.35)}
+.grid{display:grid;gap:14px}.g2{grid-template-columns:repeat(2,minmax(0,1fr))}.g3{grid-template-columns:repeat(3,minmax(0,1fr))}.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.mt{margin-top:14px}
+p{margin:4px 0}ul{margin:4px 0;padding-left:20px}li{margin:2px 0}
+table{width:100%;border-collapse:collapse;font-size:15px}
+th,td{border-bottom:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top}
+th{background:var(--paper2);font-weight:700;white-space:nowrap}
+td.c,th.c{text-align:center}
+.tag{display:inline-block;font-size:12px;padding:0 8px;border-radius:99px;border:1px solid var(--line);background:var(--paper2);color:var(--muted);white-space:nowrap}
+.tag.keep{background:#DDF1EA;border-color:#A9D9CB;color:#1F6F5E}
+.tag.new{background:#FFE9C7;border-color:#F2C778;color:#8A5A08}
+.tag.reuse{background:#E4ECFB;border-color:#B5C9EF;color:#2D4E8F}
+.q{display:inline-block;width:14px;height:14px;border-radius:4px;vertical-align:-2px;margin-right:5px;border:1px solid rgba(0,0,0,.15)}
+/* 图示 */
+.fig{position:relative;cursor:zoom-in;border-radius:16px;overflow:hidden;background:var(--night);border:1.5px solid var(--line)}
+.fig.light{background:var(--paper2)}
+.fig svg{display:block;width:100%;height:auto}
+.fig img{display:block;width:100%;height:auto}
+.fig:after{content:"单击放大";position:absolute;right:8px;top:8px;font-size:12px;padding:0 8px;border-radius:99px;background:rgba(251,246,236,.9);color:var(--muted);opacity:0;transition:.15s}
+.fig:hover:after{opacity:1}
+.cap{font-size:14px;color:var(--muted);margin-top:6px;text-align:center}
+.steps{display:flex;gap:6px;padding:8px;background:#161C27}
+.steps b{flex:1;text-align:center;font-size:14px;font-weight:500;color:#8E99AD;border-radius:8px;padding:3px 4px;background:#222B3A}
+.arrow{color:var(--muted);font-weight:700}
+.note{background:#FFF4D6;border:1.5px dashed var(--gold);border-radius:14px;padding:9px 14px;font-size:14px}
+svg text{font-family:var(--font)}
+.dash{stroke-dasharray:7 6;animation:dash 1s linear infinite}@keyframes dash{to{stroke-dashoffset:-13}}
+#lb{position:fixed;inset:0;background:rgba(20,15,10,.86);display:none;align-items:center;justify-content:center;z-index:50;cursor:zoom-out;padding:24px}
+#lb.on{display:flex}
+#lb .box{width:min(94vw,1240px);max-height:92vh;overflow:auto;border-radius:16px}
+#lb .box .fig{cursor:zoom-out}#lb .box .fig:after{display:none}
+#lb .box img{max-height:88vh;width:auto;margin:0 auto}
+#lb .x{position:fixed;right:22px;top:16px;color:#fff;font-size:15px;border:1px solid rgba(255,255,255,.4);border-radius:99px;padding:2px 14px}
+@media(max-width:900px){.layout{grid-template-columns:1fr}aside{position:static;height:auto;border-right:0;border-bottom:1.5px dashed var(--line)}main{padding:18px 14px 60px}.g2,.g3,.g4{grid-template-columns:1fr}header.top{grid-template-columns:1fr}header.top svg{max-width:180px}}
+
+header.top{grid-template-columns:1fr}.back{display:inline-block;background:#FFE27A;color:var(--ink);padding:8px 16px;border-radius:12px;font-weight:700;text-decoration:none;margin-top:14px}
+button,select{font:inherit}button{cursor:pointer;border:0;border-radius:9px;padding:8px 16px;background:var(--ink);color:var(--paper)}button:disabled{opacity:.5;cursor:default}.controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:12px 0}.controls select{max-width:100%;padding:7px;border:1px solid var(--line);border-radius:8px;background:var(--paper)}
+.viewport{border-radius:16px;overflow:hidden;background:var(--night)}.viewport svg{display:block;width:100%;height:auto}.viewport .frame{stroke:#8FE3CF}.viewport.invalid .frame{stroke:#FF796C}.paper{transform-box:fill-box;transform-origin:center}.shaking{animation:shake .55s ease-in-out 3}.sucked{animation:suck .6s ease-in forwards}.broken{animation:breakup .45s forwards}.react{animation:shake .45s 1}
+@keyframes shake{0%,82%,100%{transform:rotate(0)}22%{transform:rotate(-7deg)}48%{transform:rotate(7deg)}68%{transform:rotate(-3deg)}}@keyframes suck{to{transform:translate(115px,155px) scale(.03);opacity:0}}@keyframes breakup{to{transform:scale(1.18);opacity:0}}
+.scratch-wrap{position:relative;width:300px;max-width:100%;margin:18px auto;background:#fff;border:5px solid #A86CE2;border-radius:16px;padding:12px;box-shadow:5px 7px 0 #E3D5C0}.scratch-face{position:relative;height:320px;color:var(--ink);text-align:center;background:#FBF6EC}.scratch-face svg{width:100%;height:210px;background:#293448;border-radius:8px}.scratch-face h3{font-size:23px}.scratch-face canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;border-radius:8px;cursor:crosshair}.scroll-table{overflow:auto}
+</style></head><body><a class="review-entry" href="#document-review">评审意见 ↓</a><div class="layout"><aside><div class="brand"><i>AB</i><div><b>拍立得怪怪</b><span>第一人称 · V0.4</span></div></div><div class="toc-t">目录</div><nav class="toc" id="toc"></nav><div class="side-note">V0.4 为第一人称探索方案。<br>V0.3 平面 / 俯视方案保留为保底。<br><a href="../index.html?all=1">全部版本 →</a></div></aside><main>
+<header class="top"><div><small>ABGAME / CAPTURE CAMERA / V0.4</small><h1>拍立得怪怪<br>第一人称拍照抓怪</h1><p>举起相机，对准怪物，按下快门。怪物变成大相纸，晃三下，再揭晓命运。</p><div class="chips"><span class="chip">第一人称取景</span><span class="chip">原地大相纸 × 3 晃</span><span class="chip">每只怪一张独立刮刮卡</span></div><a class="back" href="../V0.3/ABGame_拍立得怪怪_V0.3.html">返回 V0.3 平面保底方案</a></div></header>
+<section id="s0" data-t="本版定位"><h2><em>00</em>本版定位 <span>先验证第一人称手感，再决定制作</span></h2><div class="note">本版不覆盖旧案。V0.3 平面 / 俯视抓取作为保底方案；捕获判定沿用，镜头、瞄准、出片演出重做。以下时长与距离均为原型初始值，待实机调优。</div><div class="card mt scroll-table"><table><tr><th>项目</th><th>V0.4 第一人称</th><th>V0.3 平面保底</th></tr>
+<tr><td>视角</td><td>举机切到第一人称取景器</td><td>平面 / 俯视角色视角</td></tr><tr><td>瞄准方式</td><td>拖动镜头，屏幕准星 + 距离</td><td>按住快门拖动地面锥形</td></tr><tr><td>锁定</td><td>框内、无遮挡、有效距离，最近准星的一只</td><td>锥形中线最近的一只</td></tr><tr><td>出片</td><td>怪物原地变大相纸 → 晃三下 → 成功吸入相机</td><td>先吞入相机 → 相机嚼三下 → 吐片</td></tr><tr><td>失败表现</td><td>相纸碎散 / 淡出，怪物原地恢复</td><td>相机呸出怪物</td></tr><tr><td>风险 / 工作量</td><td>较高：镜头切换、遮挡、眩晕、第一人称手部与场景纸片</td><td>较低：沿用平面移动与角色分层动作</td></tr></table></div></section>
+<section id="s1" data-t="操作与取景"><h2><em>01</em>举机 → 对准 → 快门</h2><div class="grid g3"><div class="card"><h3>① 举起相机</h3><p>点相机槽装备，点「举机」切入 FPS 取景器；叠加取景框、中心准星、倍率 / 距离指示及相纸余量。退出举机回原视角。</p></div><div class="card"><h3>② 对准怪物</h3><p>鼠标 / 触屏拖动转镜头。怪物中心在框内且 ≤6 米、无遮挡、品阶可抓 → 框绿，显示概率；超距 / 不可抓 → 框红并写明原因；无目标 → 中性框。</p></div><div class="card"><h3>③ 按快门拍照</h3><p>点按快门（键盘空格）闪光；0.2s 预备结束再次校验目标，通过才扣 1 张相纸。空拍、红框、取消不消耗。倍率仅帮助观察，不增加射程或概率。</p></div></div><div class="card mt"><h3>锁定与移动</h3><p>只锁准星附近的一只，角度相近选距离近的；新目标需更靠近准星 5° 才切换，保留防抖。隔墙不可锁，玩家不可锁。举机可移动（暂按移速不变），无自动追踪；目标离框即失锁。换武器 / 用药 / 被控 / 倒地取消瞄准；普通受击不打断。长按槽位仍只选相机品阶，不拍照。</p></div></section>
+<section id="s2" data-t="原地出片与三次摇晃"><h2><em>02</em>核心结果时序 <span>晃的是相纸，不是相机</span></h2><div class="card scroll-table"><table><tr><th>时间</th><th>画面与状态</th></tr><tr><td>0–0.2s</td><td>按下快门，预备咔嚓；被控制可取消，不扣纸。</td></tr><tr><td>0.2–0.45s</td><td>二次校验、扣纸、闪光。怪物被拍后在原位置变成一张竖立的大相纸，大小约怪物轮廓 1.3 倍，图像印在纸面上。</td></tr><tr><td>0.45–2.10s</td><td>相纸本身晃 3 下；每下动作约 0.45s + 0.10s 停顿。第 1 下试探，第 2 下加强折角，第 3 下发光蓄势。音高递升、停顿制造紧张；可用边缘亮度暗示概率档位，不提前保证成功。</td></tr><tr><td>2.10–2.70s 成功</td><td>大相纸收缩、沿弧线飞向玩家镜头下方相机，吸入口收片。成功后才进入相机，再结算一张刮刮卡照片入包；怪物从场上移除。</td></tr><tr><td>2.10–2.55s 失败</td><td>相纸裂纹 / 淡出，原地恢复怪物形象：位置、朝向、拍前血量和行为状态保留。怪物抖身 / 愤怒叫一声，立即恢复行动，无额外硬直；不是从相机吐回。</td></tr></table></div><div class="note mt">扣纸瞬间由权威端只判一次概率并保留怪物快照；三次晃动不重抽。演出中目标不可受击、不可被他人重复捕获，玩家可移动但不能再拍或换武器。被控 / 倒地不取消已生效的结算；失败恢复拍前状态后继续 AI，成功奖励只发一次。</div></section>
+<section id="s3" data-t="第一人称交互预览"><h2><em>03</em>取景器试玩 <span>交互示意，不代表最终画质</span></h2><div class="card"><div class="controls"><button id="raise" type="button">举起相机</button><label>目标 <select id="target"><option value="ok">框内 · 4.2m · 可抓</option><option value="far">超距 · 8.0m</option><option value="boss">首领 · 不可抓</option><option value="empty">没有目标</option></select></label><label>演示结果 <select id="outcome"><option value="success">成功</option><option value="fail">失败</option><option value="random">随机（52%）</option></select></label></div>
+<div id="finder" class="viewport"><svg viewBox="0 0 820 430" role="img" aria-label="第一人称拍照演示"><defs><linearGradient id="sky" x2="0" y2="1"><stop stop-color="#26394C"/><stop offset="1" stop-color="#516765"/></linearGradient><g id="creature"><path d="M-52 30Q-85-50-39-52L-25-86 0-61 27-86 40-50Q87-45 53 30Z" fill="#A86CE2" stroke="#2C241E" stroke-width="5"/><circle cx="-23" cy="-19" r="15" fill="#FFE27A"/><circle cx="24" cy="-19" r="15" fill="#FFE27A"/><path d="M-29-25l12 12m-12 0 12-12m35 0 12 12m-12 0 12-12M-18 14Q0 32 20 12" stroke="#2C241E" stroke-width="5" fill="none"/></g></defs><rect width="820" height="430" fill="url(#sky)"/><path d="M0 285L410 214 820 285V430H0Z" fill="#394D45"/><path d="M0 430L410 214 820 430M0 345H820M170 430L410 214 650 430" stroke="#64765D" fill="none" opacity=".6"/><path d="M70 286V123L118 80 152 122V278M684 279V98L723 48 759 98V283" fill="#213C38"/>
+<g transform="translate(410 252) scale(1.2)"><g id="liveMonster"><use href="#creature"/></g></g>
+<g transform="translate(410 220)"><g id="bigPaper" class="paper" visibility="hidden"><rect x="-91" y="-132" width="182" height="232" rx="5" fill="#FBF6EC" stroke="#D5C9B7" stroke-width="4"/><rect x="-76" y="-116" width="152" height="167" fill="#293448"/><g transform="translate(0 7) scale(.85)"><use href="#creature"/></g><text y="81" text-anchor="middle" fill="#2C241E" font-size="18">纽扣眼 · 显影中</text></g></g>
+<g id="overlay" visibility="hidden"><path class="frame" d="M260 142V100H310M510 100H560V142M260 278V320H310M510 320H560V278" fill="none" stroke-width="5"/><path d="M393 210H427M410 193V227" stroke="#fff" stroke-width="2"/><text x="30" y="40" fill="#fff" font-size="18">● FPS VIEWFINDER · 1.0×</text><text id="rangeText" x="790" y="40" text-anchor="end" fill="#8FE3CF" font-size="18">4.2m / 6m</text><text id="frameText" x="410" y="78" text-anchor="middle" fill="#8FE3CF" font-size="18">可抓 · 52%</text><text id="paperCount" x="30" y="400" fill="#FFE27A" font-size="18">相纸 5</text></g>
+<g transform="translate(567 360)"><path d="M-60 70V8Q-60-8-44-8H-15L-4-25H44L55-8H94Q110-8 110 8V70Z" fill="#D7C4A4" stroke="#2C241E" stroke-width="5"/><circle cx="26" cy="26" r="31" fill="#293448" stroke="#A86CE2" stroke-width="7"/><circle cx="26" cy="26" r="13" fill="#678C9C"/><rect x="67" y="1" width="26" height="13" fill="#FFE27A"/></g><rect id="flash" width="820" height="430" fill="#fff" opacity="0"/></svg></div>
+<div class="controls"><button id="shoot" type="button" disabled>按快门 / 空格</button><button id="replay" type="button">重置 / 重播准备</button></div><p id="demoStatus" role="status" aria-live="polite">先举起相机。切换目标可测试红框与空拍；结果由演示选项控制。</p></div></section>
+<section id="s4" data-t="抓取规则与资源"><h2><em>04</em>判定沿用 V0.3</h2><div class="grid g2"><div class="card"><h3>一张相纸，一次抓取</h3><p>一次只抓一只，绿框且校验通过才消耗一张。失败相纸作废，不退还。相机只有一种，腕带六色表示品阶，仅影响抓取概率，不附带冰冻 / 致盲。</p></div><div class="card"><h3>低血 / 高阶 / 首领</h3><p>血量低于 50%：概率 ×1.4，上限 95%。高阶仅金、红相机可抓；首领任何相机都不能抓。绿框概率已算低血加成。</p></div></div><div class="card mt scroll-table"><table><tr><th>初始概率（待调）</th><th>白</th><th>绿</th><th>蓝</th><th>紫</th><th>金</th><th>红</th></tr><tr><td>普通</td><td>30%</td><td>40%</td><td>52%</td><td>65%</td><td>78%</td><td>90%</td></tr><tr><td>精英</td><td>10%</td><td>18%</td><td>28%</td><td>40%</td><td>55%</td><td>72%</td></tr><tr><td>高阶</td><td>✕</td><td>✕</td><td>✕</td><td>✕</td><td>20%</td><td>35%</td></tr><tr><td>首领</td><td>✕</td><td>✕</td><td>✕</td><td>✕</td><td>✕</td><td>✕</td></tr></table><p class="mt">相机资源存放沿用 1×1，同品阶可叠：白绿 10、蓝紫 5、金 3、红 1；角标表示剩余相纸。先补同品阶，再换其他品阶，全空换回武器。此堆叠规则不适用于捕获产物。</p></div></section>
+<section id="s5" data-t="刮刮卡照片与背包"><h2><em>05</em>相纸 ≠ 刮刮卡照片</h2><div class="grid g2"><div class="card"><h3>消耗品：空白相纸</h3><p>拍照前持有，用于支付一次有效捕获。按品阶记录余量，不含怪物信息，不是卡片奖励。</p></div><div class="card"><h3>战利品：怪物刮刮卡照片</h3><p>仅成功后产生，每只怪物一张独立物品，不堆叠；同种怪物抓两只也占两个 1×1 格子，各自保存个体 ID、刮开状态与捕获记录。</p></div></div><div class="card mt"><h3>卡面绑定怪物设计，而非通用贴图</h3><p>每个物种独立卡画：纽扣眼用缝线 / 紫绒背景，苔团用叶片 / 孢子纹理，齿轮兽用铜齿 / 铆钉纹理。卡图对应被捕获物种与外形变体，不能随机换成别的怪。初始银色刮层覆盖怪物照片与资料，刮开露出名字、稀有度、怪物图像；预留一项属性 / 收藏加成（数值与是否启用待确认）。</p><p class="mt">沿用照片品阶 = 所用相机品阶，六色稀有度边框始终可见；物种稀有度另记，避免与相机品阶混淆。命名「未刮开·纽扣眼照片 #个体短码」，揭晓后「纽扣眼·蓝品照片 #短码」。未刮前名称仅作物种归属提示，详细资料在刮层下。</p><h3 class="mt">入包与溢出</h3><p>成功吸入相机后，优先放背包首个空闲格，提示「获得怪物刮刮卡 ×1」。背包满不吞奖励：以未刮照片掉在玩家脚下，保留独立 ID / 卡画，可腾格后拾取；失败不产生卡片。暂按局内收集、带出后在怪物系统刮开；刮开不再占新格、不额外扣相纸，进度按该个体保存，重进继续。</p></div></section>
+<section id="s6" data-t="刮刮卡交互预览"><h2><em>06</em>亲手刮开 <span>鼠标 / 触屏可拖动</span></h2><div class="grid g2"><div class="card"><div class="scratch-wrap"><div class="scratch-face"><svg viewBox="0 0 270 210" role="img" aria-label="纽扣眼专属缝线卡画"><path d="M0 0H270V210H0Z" fill="#293448"/><path d="M10 20L260 190M10 190L260 20" stroke="#526078" stroke-dasharray="5 8"/><g transform="translate(135 145) scale(1.05)"><path d="M-52 30Q-85-50-39-52L-25-86 0-61 27-86 40-50Q87-45 53 30Z" fill="#A86CE2" stroke="#2C241E" stroke-width="5"/><circle cx="-23" cy="-19" r="15" fill="#FFE27A"/><circle cx="24" cy="-19" r="15" fill="#FFE27A"/><path d="M-29-25l12 12m-12 0 12-12m35 0 12 12m-12 0 12-12M-18 14Q0 32 20 12" stroke="#2C241E" stroke-width="5" fill="none"/></g></svg><h3>纽扣眼</h3><p>蓝品照片 · 物种：稀有</p><p>收藏属性：韧性 +2（示意）</p><canvas id="scratch" width="540" height="640" aria-label="拖动刮开怪物照片"></canvas></div></div><div class="controls"><button id="scratchReset" type="button">重新覆盖</button><button id="scratchReveal" type="button">直接揭晓（键盘可用）</button></div><p id="scratchStatus" role="status">银色刮层待刮开 · 此预览不写入背包</p></div><div class="card"><h3>每只一格，状态独立</h3><p>▣ 未刮开·纽扣眼 #A01</p><p>▣ 纽扣眼·蓝品照片 #A02</p><p>▣ 未刮开·苔团 #B01</p><p class="mt">相同物种也不合并。保留框色、独立卡面、刮开进度；不把消耗品「相纸」和战利品「照片」用同一图标。预览刮除超过 55% 自动揭晓，正式阈值待调。</p></div></div></section>
+<section id="s7" data-t="异常与结算边界"><h2><em>07</em>异常与结算边界</h2><div class="card"><table><tr><th>情况</th><th>处理</th></tr><tr><td>无怪 / 超距 / 遮挡 / 红框 / 无相纸</td><td>提示具体原因，不闪光、不扣纸、不进入三晃。</td></tr><tr><td>快门预备内目标离框或被击杀</td><td>校验不通过，取消且不扣纸。</td></tr><tr><td>两人同时拍同一只</td><td>权威端先校验成功者占用；后者按目标丢失处理，不消耗。</td></tr><tr><td>显影中玩家被控 / 倒地</td><td>已扣纸流程照常；成功按背包 / 满包掉落规则结算，失败恢复原地怪物。</td></tr><tr><td>断线 / 重连</td><td>按捕获事务 ID 恢复结算，怪物快照与奖励互斥；不得重复发卡或重复刷怪。实现方式待程序确认。</td></tr><tr><td>失败后再次拍摄</td><td>立即可再次瞄准，无次数限制；须重新校验并再次消耗相纸。</td></tr></table></div></section>
+<section id="s8" data-t="制作需求"><h2><em>08</em>制作需求 <span>按原型 → 正式资源拆分</span></h2><div class="grid g3">
+<div class="card"><h3>程序</h3><p>FPS 镜头切换 / 拖动与回退；取景框射线、距离、遮挡、防抖；捕获事务与快照恢复；独立卡片实例 / 满包掉落 / 刮层持久化。</p></div><div class="card"><h3>动作</h3><p>第一人称双手举机、瞄准待机、快门与吸片；第三人称旁观动作同步；失败怪物抖身 / 愤怒反馈。</p></div><div class="card"><h3>美术</h3><p>复用拍立得模型，补近景手部与机身细节；每物种独立卡画、变体、缝线纹理；六色稀有度边框、空白相纸与刮层分图标。</p></div><div class="card"><h3>动效</h3><p>屏幕取景框绿 / 红与原因文字；闪光、大相纸替换、三晃与停顿；成功缩小吸入、失败碎散与恢复；刮屑反馈。</p></div><div class="card"><h3>音效</h3><p>举机轻响、锁定叮、快门咔嚓；三晃纸张扑动音高递升；成功吸片 / 入包提示、失败撕纸 / 怪叫；摩擦刮层声。</p></div><div class="card"><h3>界面</h3><p>准星 / 距离 / 倍率 / 相纸余量；退出举机与快门按钮；独立照片格、卡名 / 框色 / 未刮标记；满包、空拍、超距提示。</p></div></div></section>
+<section id="s9" data-t="待确认"><h2><em>09</em>待确认</h2><div class="card"><ol><li>是否仅举机时第一人称？暂按退出回原视角；镜头过渡约 0.25s，FOV、眩晕与移动速度需实测。</li><li>手机拖镜头与快门的手指分区、手柄映射如何安排？是否需要辅助瞄准？暂不自动追踪。</li><li>6 米 / 防抖 5° / 倍率显示、概率数字是否合适？先沿用旧概率表。</li><li>每下 0.45s + 0.10s 停顿是否过慢？三晃必须保留，节奏可调，不随品阶增减次数。</li><li>失败恢复拍前行为状态的 AI 快照粒度与原地占位冲突怎么处理？暂保留位置与血量，不加硬直。</li><li>照片品阶继续随相机，物种稀有度单列是否清晰？收藏加成是否启用？演示数值不作为最终奖励。</li><li>刮开入口暂按带出后，局内是否开放？刮开阈值 / 进度保存精度由程序确认。</li><li>首领仍不可抓；若未来做专属相机须另案，不纳入本次。</li></ol></div></section>
+<section id="document-review" class="doc-review" data-review-document="pellet-v4" aria-labelledby="review-title">
+  <h2 id="review-title">评审意见</h2>
+  <a data-open-review>打开在线评审 →</a>
+  <form>
+    <label>关联段落 <select><option value="general">整份需求</option></select></label>
+    <textarea aria-label="评审意见" maxlength="2000" placeholder="意见公开可见，请勿填写个人或敏感信息" required></textarea>
+    <button>记录意见</button>
+  </form>
+  <p role="status"></p>
+  <ul aria-label="已记录的评审意见"></ul>
+</section></main></div><script src="../../review/client.js"></script><script src="../../review/document.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+const sections=[...document.querySelectorAll('main section[data-t]')];
+sections.forEach((s,i)=>{const a=document.createElement('a');a.href='#'+s.id;a.innerHTML='<em>'+String(i).padStart(2,'0')+'</em>'+s.dataset.t;$('toc').append(a)});
+function spy(){let k=0;sections.forEach((s,i)=>{if(s.getBoundingClientRect().top<140)k=i});[...$('toc').children].forEach((a,i)=>a.classList.toggle('on',i===k))}addEventListener('scroll',spy,{passive:true});spy();
+let raised=false,busy=false,papers=5,generation=0;
+const status=t=>$('demoStatus').textContent=t;
+const delay=ms=>new Promise(r=>setTimeout(r,ms));
+function aim(){const t=$('target').value;const ok=t==='ok';$('overlay').setAttribute('visibility',raised?'visible':'hidden');$('finder').classList.toggle('invalid',!ok);$('liveMonster').style.visibility=t==='empty'?'hidden':'visible';$('rangeText').textContent=t==='far'?'8.0m / 6m':t==='empty'?'— / 6m':'4.2m / 6m';$('frameText').textContent=ok?'可抓 · 52%':t==='far'?'无法抓取 · 超出距离':t==='boss'?'无法抓取 · 首领':'没有可抓怪物';$('frameText').setAttribute('fill',ok?'#8FE3CF':'#FF796C');$('paperCount').textContent='相纸 '+papers;$('shoot').disabled=!raised||busy;$('raise').textContent=raised?'收起相机':'举起相机'}
+function reset(){generation++;busy=false;raised=true;papers=5;$('bigPaper').setAttribute('visibility','hidden');$('bigPaper').setAttribute('class','paper');$('liveMonster').classList.remove('react');$('flash').setAttribute('opacity','0');$('target').disabled=$('outcome').disabled=$('raise').disabled=false;aim();status('已重置，等待快门。')}
+$('raise').onclick=()=>{raised=!raised;aim();status(raised?'已举机，对准后按快门。':'已收起相机。')};
+$('target').onchange=aim;
+$('replay').onclick=reset;
+async function shoot(){if(!raised||busy)return;if($('target').value!=='ok'){status($('frameText').textContent+' · 不消耗相纸');return}if(!papers){status('相纸不足 · 请重置补充');return}
+const run=++generation;busy=true;aim();$('target').disabled=$('outcome').disabled=$('raise').disabled=true;const success=$('outcome').value==='random'?Math.random()<.52:$('outcome').value==='success';status('快门预备…');
+await delay(200);if(run!==generation)return;papers--;aim();$('flash').setAttribute('opacity','.9');await delay(100);if(run!==generation)return;$('flash').setAttribute('opacity','0');$('liveMonster').style.visibility='hidden';$('bigPaper').setAttribute('visibility','visible');status('怪物原地变成大相纸');await delay(150);if(run!==generation)return;
+$('bigPaper').classList.add('shaking');for(let i=1;i<=3;i++){status('大相纸晃动 '+i+' / 3 · 等待结果');await delay(550);if(run!==generation)return}
+$('bigPaper').classList.remove('shaking');$('bigPaper').classList.add(success?'sucked':'broken');status(success?'成功！相纸缩小飞入相机…':'失败！相纸碎散，怪物原地恢复…');await delay(success?600:450);if(run!==generation)return;
+$('bigPaper').setAttribute('visibility','hidden');if(!success){$('liveMonster').style.visibility='visible';$('liveMonster').classList.add('react')}status(success?'成功 · 获得独立刮刮卡照片 ×1（演示）':'失败 · 怪物在原位置 / 原血量恢复并愤怒反应，相纸已消耗');busy=false;$('target').disabled=$('outcome').disabled=$('raise').disabled=false;$('shoot').disabled=true;
+}
+$('shoot').onclick=shoot;addEventListener('keydown',e=>{if(e.code==='Space'&&!/INPUT|TEXTAREA|SELECT|BUTTON/.test(e.target.tagName)&&$('shoot').disabled===false){e.preventDefault();shoot()}});aim();
+const canvas=$('scratch'),ctx=canvas.getContext('2d',{willReadFrequently:true});let last=null;
+function cover(){ctx.globalCompositeOperation='source-over';ctx.fillStyle='#B9BEC6';ctx.fillRect(0,0,540,640);ctx.strokeStyle='#D5D9DF';ctx.lineWidth=12;for(let x=-640;x<540;x+=62){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x+640,640);ctx.stroke()}ctx.fillStyle='#526078';ctx.textAlign='center';ctx.font='bold 32px sans-serif';ctx.fillText('刮开 · 发现怪怪',270,315);$('scratchStatus').textContent='银色刮层待刮开 · 此预览不写入背包';last=null}
+function point(e){const r=canvas.getBoundingClientRect();return [(e.clientX-r.left)*540/r.width,(e.clientY-r.top)*640/r.height]}
+function erase(p){ctx.globalCompositeOperation='destination-out';ctx.lineWidth=55;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(...(last||p));ctx.lineTo(...p);ctx.stroke();last=p}
+canvas.onpointerdown=e=>{canvas.setPointerCapture(e.pointerId);last=point(e);erase(last)};
+canvas.onpointermove=e=>{if(last)erase(point(e))};
+function reveal(){ctx.clearRect(0,0,540,640);$('scratchStatus').textContent='已揭晓 · 纽扣眼 · 独立照片 #A01'}
+canvas.onpointerup=()=>{last=null;const d=ctx.getImageData(0,0,540,640).data;let n=0;for(let i=3;i<d.length;i+=4)if(d[i]<128)n++;const pct=Math.round(n/(540*640)*100);$('scratchStatus').textContent='已刮开 '+pct+'% · 仅该个体进度';if(pct>=55)reveal()};
+canvas.onpointercancel=()=>{last=null};$('scratchReset').onclick=cover;$('scratchReveal').onclick=reveal;cover();
+</script></body></html>
