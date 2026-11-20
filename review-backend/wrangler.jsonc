@@ -1,0 +1,22 @@
+{
+  "name": "abgame-online-reviews",
+  "main": "worker.mjs",
+  "compatibility_date": "2026-11-20",
+  "workers_dev": false,
+  "preview_urls": false,
+  "ratelimits": [{
+    "name": "REVIEW_WRITES",
+    "namespace_id": "716120483",
+    "simple": { "limit": 120, "period": 60 }
+  }],
+  "observability": {
+    "enabled": true,
+    "logs": { "enabled": true },
+    "traces": { "enabled": true, "head_sampling_rate": 0.01 }
+  },
+  "d1_databases": [{
+    "binding": "REVIEWS",
+    "database_name": "abgame-online-reviews",
+    "database_id": "00000000-0000-0000-0000-000000000000"
+  }]
+}
