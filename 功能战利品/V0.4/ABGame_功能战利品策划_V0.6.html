@@ -363,8 +363,6 @@ a.card.rs{text-decoration:none;color:inherit}
 .rvnotes:empty{display:none}
 .rvnote{background:var(--paper2);border:1px solid var(--line);border-radius:12px;padding:8px 32px 8px 12px;font-size:14px;position:relative}
 .rvnote time{display:block;font-size:11px;color:var(--faint);margin-bottom:2px}
-.rvnote button{position:absolute;right:6px;top:4px;border:0;background:none;color:var(--faint);font-size:18px;line-height:1;padding:2px 4px}
-.rvnote button:hover{color:var(--prank)}
 .rvdot{width:9px;height:9px;border-radius:50%;flex:none;margin-left:auto;border:1.5px solid rgba(0,0,0,.12)}
 .nl.on .rvdot{border-color:rgba(255,255,255,.5)}
 .rvbadge{display:inline-block;font-size:11px;font-weight:700;color:#fff;border-radius:99px;padding:1px 8px}
@@ -2946,13 +2944,13 @@ window.TOY_BACKUP = [
   }
   function rvNotes(id) {
     const r = RV.get(id);
-    return r.notes.length ? r.notes.map(n => `<div class="rvnote"><time>${fmtT(n.at)}</time><button ${RV.mode() === 'local' ? 'disabled' : ''} type="button" data-rvdel="${n.id}" data-id="${id}" title="删除这条意见" aria-label="删除这条意见">×</button><div class="tx">${esc(n.text).replace(/\n/g, '<br>')}</div></div>`).join('') : '';
+    return r.notes.length ? r.notes.map(n => `<div class="rvnote"><time>${fmtT(n.at)}</time><div class="tx">${esc(n.text).replace(/\n/g, '<br>')}</div></div>`).join('') : '';
   }
   function rvCard(it) {
     return `<section class="card rvcard" id="rv" data-id="${it.id}">
       <div class="rvrow"><h3>评审</h3><div class="rvbtns" data-rvbtns="${it.id}">${rvBtns(it.id)}</div><span class="rvsave small"></span></div>
       ${RV.mode() === 'local' ? `<p class="rvlocal">此处仅预览。<a href="${esc(ABGameReview.onlineUrl())}">打开在线评审 →</a></p>` : ''}
-      <form class="rvform" data-id="${it.id}" autocomplete="off"><textarea ${RV.mode() === 'local' ? 'disabled' : ''} name="text" rows="4" maxlength="2000" placeholder="记录评审意见…（Ctrl + Enter 提交）" aria-label="评审意见"></textarea><button type="submit">记录</button></form>
+      <form class="rvform" data-id="${it.id}" autocomplete="off"><textarea ${RV.mode() === 'local' ? 'disabled' : ''} name="text" rows="4" maxlength="2000" placeholder="意见公开可见，请勿填写个人或敏感信息" aria-label="评审意见"></textarea><button type="submit">记录</button></form>
       <div class="rvnotes" data-rvnotes="${it.id}">${rvNotes(it.id)}</div>
     </section>`;
   }
@@ -3046,8 +3044,6 @@ window.TOY_BACKUP = [
   document.addEventListener('click', async e => {
     const b = e.target.closest('[data-rv]');
     if (b) { e.preventDefault(); const was = RV.get(b.dataset.id).status; RV.setStatus(b.dataset.id, b.dataset.rv); toast(was === b.dataset.rv ? `${byId[b.dataset.id].name}：已取消` : `${byId[b.dataset.id].name} → ${rvName(b.dataset.rv)}`); return; }
-    const d = e.target.closest('[data-rvdel]');
-    if (d) { e.preventDefault(); if (confirm('删除这条意见？')) { RV.delNote(d.dataset.id, d.dataset.rvdel); toast('已删除'); } return; }
     const f = e.target.closest('[data-rvf]');
     if (f) { e.preventDefault(); rvFilter = rvFilter === f.dataset.rvf ? 'all' : f.dataset.rvf; const y = window.scrollY; view.innerHTML = reviewPage(); window.scrollTo(0, y); paintSave(); return; }
     const a = e.target.closest('[data-rvact]');

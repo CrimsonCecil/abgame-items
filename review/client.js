@@ -16,14 +16,17 @@
     try { localStorage.setItem(key, JSON.stringify(value)); return true; } catch { return false; }
   };
 
-  function open(doc) {
+  function open(doc, ballot) {
     if (!online) return null;
     const url = base + 'api/reviews/' + doc;
     async function request(op) {
       const response = await fetch(url, op ? {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(op),
         signal: AbortSignal.timeout(12000), redirect: 'error'
-      } : { cache: 'no-store', signal: AbortSignal.timeout(12000), redirect: 'error' });
+      } : {
+        cache: 'no-store', signal: AbortSignal.timeout(12000), redirect: 'error',
+        headers: ballot ? { 'X-Review-Ballot': ballot } : undefined
+      });
       if (!response.headers.get('content-type')?.includes('application/json')) {
         throw new Error('请重新打开在线评审页面');
       }
@@ -35,15 +38,17 @@
   }
 
   function items(doc, ST, options = {}) {
-    const remote = open(doc), qs = 'abgame/review/' + doc + '/queue', cache = 'abgame/review/' + doc + '/cache';
+    const qs = 'abgame/review/' + doc + '/queue', cache = 'abgame/review/' + doc + '/cache';
     const vk = 'abgame/review/' + doc + '/voter';
-    const voter = options.scores && (read(vk, '') || readLegacyVoter() || (remote ? uid() : ''));
+    const voter = options.scores && (read(vk, '') || readLegacyVoter() || (online ? uid() : ''));
+    const remote = open(doc, voter);
     function readLegacyVoter() {
       try { return localStorage.getItem('abgame-med-review/voter') || ''; } catch { return ''; }
     }
     if (voter) write(vk, voter);
     const legacy = options.legacyCache ? read(options.legacyCache, {}) : {};
-    let pending = remote ? read(qs, []) : [];
+    const readQueue = fallback => read(qs, fallback).filter(op => op.t !== 'del');
+    let pending = remote ? readQueue([]) : [];
     let state = Object.assign(Object.create(null), read(cache, remote ? {} : legacy));
     let defaults = options.defaults || {};
     const listeners = [];
@@ -65,12 +70,11 @@
       pending = next;
       queueOnDisk = write(qs, next);
     };
-    const latestQueue = () => queueOnDisk ? read(qs, pending) : pending;
+    const latestQueue = () => queueOnDisk ? readQueue(pending) : pending;
     function apply(op, dest = state) {
       const r = rec(op.id, dest);
       if (op.t === 'status' && op.at >= r.at) { r.status = op.status; r.at = op.at; }
       if (op.t === 'add' && !r.notes.some(n => n.id === op.note.id)) r.notes.push(op.note);
-      if (op.t === 'del') r.notes = r.notes.filter(n => n.id !== op.nid);
       if (op.t === 'score') {
         r.scores ||= Object.create(null);
         Object.defineProperty(r.scores, op.voter, {
@@ -92,7 +96,9 @@
           const next = Object.create(null);
           for (const r of snap.status) apply({ t: 'status', id: r.item_id, status: r.status, at: r.updated_at }, next);
           for (const r of snap.notes) apply({ t: 'add', id: r.item_id, note: { id: r.id, text: r.body, at: r.created_at } }, next);
-          for (const r of snap.scores) apply({ ...r, t: 'score', id: r.item_id, at: r.updated_at }, next);
+          snap.scores.forEach((r, i) => apply({
+            ...r, t: 'score', id: r.item_id, at: r.updated_at, voter: r.mine ? voter : '@' + i
+          }, next));
           pending = latestQueue();
           for (const op of pending) apply(op, next);
           state = next;
@@ -123,7 +129,6 @@
       commit([{ t: 'add', id, note: { id: uid(), text: text.slice(0, 2000), at: Date.now() } }]);
       return true;
     }
-    function delNote(id, nid) { commit([{ t: 'del', id, nid }]); }
     const myScore = id => ({ fun: 0, clear: 0, cost: 0, ...get(id).scores?.[voter] });
     function setScore(id, key, value) {
       if (!options.scores || !['fun', 'clear', 'cost'].includes(key)) return;
@@ -173,7 +178,7 @@
       window.addEventListener('online', sync);
     }
     return {
-      ST, get, all: () => state, setStatus, addNote, delNote, setScore, myScore, avgScore, importData, sync,
+      ST, get, all: () => state, setStatus, addNote, setScore, myScore, avgScore, importData, sync,
       setDefaults: value => { defaults = value || {}; },
       mode: () => mode, syncedAt: () => syncedAt, lastError: () => lastError,
       pendingCount: () => pending.length, pendingOnDisk: () => queueOnDisk, onChange: fn => listeners.push(fn)

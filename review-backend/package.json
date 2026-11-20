@@ -7,9 +7,6 @@
     "dev": "wrangler dev -c wrangler.jsonc",
     "deploy": "wrangler deploy -c wrangler.production.jsonc"
   },
-  "dependencies": {
-    "jose": "6.1.3"
-  },
   "devDependencies": {
     "wrangler": "4.165.0"
   }

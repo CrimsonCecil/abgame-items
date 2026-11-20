@@ -364,8 +364,6 @@ a.card.rs{text-decoration:none;color:inherit}
 .rvnotes:empty{display:none}
 .rvnote{background:var(--paper2);border:1px solid var(--line);border-radius:12px;padding:8px 32px 8px 12px;font-size:14px;position:relative}
 .rvnote time{display:block;font-size:12px;color:var(--faint);margin-bottom:2px}
-.rvnote button{position:absolute;right:6px;top:4px;border:0;background:none;color:var(--faint);font-size:18px;line-height:1;padding:2px 4px}
-.rvnote button:hover{color:var(--prank)}
 .rvdot{width:9px;height:9px;border-radius:50%;flex:none;margin-left:auto;border:1.5px solid rgba(0,0,0,.12)}
 .nl.on .rvdot{border-color:rgba(255,255,255,.5)}
 .rvbadge{display:inline-block;font-size:12px;font-weight:700;color:#fff;border-radius:99px;padding:1px 8px}
@@ -1776,7 +1774,7 @@ window.MED_DROP = [
   }
   function rvNotes(id) {
     const r = RV.get(id);
-    return r.notes.length ? r.notes.map(n => `<div class="rvnote"><time>${fmtT(n.at)}</time><button ${RV.mode() === 'local' ? 'disabled' : ''} type="button" data-rvdel="${n.id}" data-id="${id}" title="删除这条意见" aria-label="删除这条意见">×</button><div class="tx">${esc(n.text).replace(/\n/g, '<br>')}</div></div>`).join('') : '';
+    return r.notes.length ? r.notes.map(n => `<div class="rvnote"><time>${fmtT(n.at)}</time><div class="tx">${esc(n.text).replace(/\n/g, '<br>')}</div></div>`).join('') : '';
   }
   const SC = [['fun', '好玩度', '体感爽快度与节奏帮助'], ['clear', '好懂度', '一眼能不能看懂怎么用'], ['cost', '好做度', '开发成本低 = 5 分']];
   function rvScores(id) {
@@ -1789,7 +1787,7 @@ window.MED_DROP = [
       <div class="rvhelp small muted">采纳 = 定案进入 CE2.0 · 延后 = 排到后续版本 · 摒弃 = 落选归档</div>
       ${RV.mode() === 'local' ? `<p class="rvlocal">此处仅预览。<a href="${esc(ABGameReview.onlineUrl())}">打开在线评审 →</a></p>` : ''}
       <div class="rvsc"><h4>评分 <small>每人一份，匿名取平均</small></h4><div data-rvscores="${w.id}">${rvScores(w.id)}</div></div>
-      <form class="rvform" data-id="${w.id}" autocomplete="off"><textarea ${RV.mode() === 'local' ? 'disabled' : ''} name="text" rows="3" maxlength="2000" placeholder="记录 V0.3 复核意见…（Ctrl + Enter 提交）" aria-label="评审意见"></textarea><button type="submit">记录</button></form>
+      <form class="rvform" data-id="${w.id}" autocomplete="off"><textarea ${RV.mode() === 'local' ? 'disabled' : ''} name="text" rows="3" maxlength="2000" placeholder="意见公开可见，请勿填写个人或敏感信息" aria-label="评审意见"></textarea><button type="submit">记录</button></form>
       <div class="rvnotes" data-rvnotes="${w.id}">${rvNotes(w.id)}</div>
     </section>`;
   }
@@ -1801,7 +1799,7 @@ window.MED_DROP = [
       <p class="muted small" style="margin-top:8px;max-width:780px">不针对单一款药品的系统想法（数值、投放、读条打断、体力条样式等）可以记录在这里。针对单品的意见请在对应药品页顶部填写。</p>
       <section class="card rvcard" id="rv" data-id="_general" style="margin-top:18px">
         <div class="rvrow"><h3>药品系统通用意见</h3><span class="rvsave small"></span></div>
-        <form class="rvform" data-id="_general" autocomplete="off"><textarea ${RV.mode() === 'local' ? 'disabled' : ''} name="text" rows="6" maxlength="2000" placeholder="写下你的意见或补充想法…（Ctrl + Enter 提交）" aria-label="其他意见"></textarea><button type="submit">记录</button></form>
+        <form class="rvform" data-id="_general" autocomplete="off"><textarea ${RV.mode() === 'local' ? 'disabled' : ''} name="text" rows="6" maxlength="2000" placeholder="意见公开可见，请勿填写个人或敏感信息" aria-label="其他意见"></textarea><button type="submit">记录</button></form>
         <div class="rvnotes" data-rvnotes="_general">${rvNotes('_general')}</div>
       </section>
     </div>`;
@@ -1894,12 +1892,6 @@ window.MED_DROP = [
     if (b) { e.preventDefault(); const was = RV.get(b.dataset.id).status; RV.setStatus(b.dataset.id, b.dataset.rv); toast(was === b.dataset.rv ? `${byId[b.dataset.id].name}：已取消` : `${byId[b.dataset.id].name} → ${rvName(b.dataset.rv)}`); return; }
     const sb = e.target.closest('[data-sc]');
     if (sb) { e.preventDefault(); RV.setScore(sb.dataset.id, sb.dataset.sc, +sb.dataset.v); return; }
-    const d = e.target.closest('[data-rvdel]');
-    if (d) {
-      e.preventDefault();
-      if (d.dataset.armed !== '1') { d.dataset.armed = '1'; d.textContent = '确认删除'; d.style.fontSize = '12px'; d.style.color = '#B8432A'; setTimeout(() => { if (d.isConnected) { d.dataset.armed = ''; d.textContent = '×'; d.style.fontSize = ''; d.style.color = ''; } }, 2500); return; }
-      RV.delNote(d.dataset.id, d.dataset.rvdel); toast('已删除'); return;
-    }
     const f = e.target.closest('[data-rvf]');
     if (f) { e.preventDefault(); rvFilter = rvFilter === f.dataset.rvf ? 'all' : f.dataset.rvf; const y = window.scrollY; view.innerHTML = reviewPage(); window.scrollTo(0, y); paintSave(); return; }
     const a = e.target.closest('[data-rvact]');
@@ -1910,7 +1902,10 @@ window.MED_DROP = [
     else if (act === 'copy') { toast((await copyText(exportMd())) ? '纪要已复制' : '复制失败，请用导出纪要'); }
     else if (act === 'import') { const inp = document.getElementById('rvfile'); if (inp) inp.click(); }
     else if (act === 'retry') { await RV.sync(); toast(RV.mode() === 'cloud' ? '已重新连上云端' : '暂未连上，稍后自动重试', RV.mode() !== 'cloud'); }
-    else if (act === 'json') { download(`ABGame_药品V0.3_评审记录_${stamp()}.json`, JSON.stringify(RV.all(), null, 2), 'application/json'); toast('JSON 已导出'); }
+    else if (act === 'json') {
+      const json = JSON.stringify(RV.all(), (key, value) => key.startsWith('@') ? undefined : value, 2);
+      download(`ABGame_药品V0.3_评审记录_${stamp()}.json`, json, 'application/json'); toast('JSON 已导出');
+    }
   });
   document.addEventListener('change', e => {
     if (e.target.id !== 'rvfile' || !e.target.files.length) return;

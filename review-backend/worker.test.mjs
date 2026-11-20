@@ -2,8 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { DatabaseSync } from 'node:sqlite';
 import { test } from 'node:test';
-import { exportJWK, generateKeyPair, SignJWT } from 'jose';
-import worker, { createWorker } from './worker.mjs';
+import app from './worker.mjs';
 import { statements } from './migrate-legacy.mjs';
 
 const origin = 'https://abgame-review.kccecil.com';
@@ -19,31 +18,21 @@ function database() {
   });
   return {
     raw: db,
+    REVIEW_WRITES: { limit: async () => ({ success: true }) },
     REVIEWS: { prepare: statement, batch: statements => Promise.all(statements.map(s => s.all())) }
   };
 }
-const app = createWorker(async () => 'reviewer@example.com');
 const req = (doc, op, headers = {}) => new Request(api + doc, op ? {
   method: 'POST', headers: { Origin: origin, 'Content-Type': 'application/json', ...headers }, body: JSON.stringify(op)
 } : { headers });
-const get = async (env, doc) => (await app.fetch(req(doc), env)).json();
+const get = async (env, doc, headers = {}) => (await app.fetch(req(doc, null, headers), env)).json();
 const post = async (env, doc, op) => assert.equal((await app.fetch(req(doc, op), env)).status, 200);
 
-test('checks the real access token signature, audience and issuer', async t => {
-  assert.equal((await worker.fetch(req('pellet-v3'), {})).status, 401);
-  const { privateKey, publicKey } = await generateKeyPair('RS256');
-  const issuer = 'https://abgame-test.cloudflareaccess.com';
-  const env = { ...database(), ACCESS_AUDIENCE: 'audience', ACCESS_ISSUER: issuer };
-  t.mock.method(globalThis, 'fetch', async input => {
-    assert.equal(String(input), issuer + '/cdn-cgi/access/certs');
-    return Response.json({ keys: [{ ...await exportJWK(publicKey), kid: 'test' }] });
-  });
-  const sign = aud => new SignJWT({ email: 'reviewer@example.com' }).setProtectedHeader({ alg: 'RS256', kid: 'test' })
-    .setIssuer(issuer).setAudience(aud).setSubject('reviewer').setExpirationTime('1h').sign(privateKey);
-  assert.equal((await worker.fetch(req('pellet-v3', null, { 'Cf-Access-Jwt-Assertion': await sign('other') }), env)).status, 401);
-  const response = await worker.fetch(req('pellet-v3', null, { 'Cf-Access-Jwt-Assertion': await sign('audience') }), env);
+test('serves shared reviews without a login or cookie', async () => {
+  const response = await app.fetch(req('pellet-v3'), database());
   assert.equal(response.status, 200);
   assert.equal(response.headers.get('Cache-Control'), 'no-store');
+  assert.equal(response.headers.get('Set-Cookie'), null);
 });
 
 test('rejects cross-origin or invalid writes', async () => {
@@ -52,6 +41,9 @@ test('rejects cross-origin or invalid writes', async () => {
   assert.equal((await app.fetch(req('weapon-v9', op, { Origin: 'https://other.example' }), env)).status, 403);
   assert.equal((await app.fetch(req('unknown', op), env)).status, 404);
   assert.equal((await app.fetch(req('weapon-v9', { ...op, status: 'unknown' }), env)).status, 400);
+  assert.equal((await app.fetch(req('weapon-v9', { ...op, padding: '评'.repeat(3000) }), env)).status, 413);
+  env.REVIEW_WRITES.limit = async () => ({ success: false });
+  assert.equal((await app.fetch(req('weapon-v9', op), env)).status, 429);
   assert.deepEqual(await get(env, 'weapon-v9'), { status: [], notes: [], scores: [] });
 });
 
@@ -62,9 +54,8 @@ test('persists section comments across clients without mixing documents', async 
   await post(env, 'pellet-v3', op);
   assert.deepEqual((await get(env, 'pellet-v3')).notes.map(r => r.body), [op.note.text]);
   assert.deepEqual((await get(env, 'weapon-v9')).notes, []);
-  await post(env, 'pellet-v3', { t: 'del', id: 's0', nid: 'note-1' });
-  await post(env, 'pellet-v3', op);
-  assert.deepEqual((await get(env, 'pellet-v3')).notes, []);
+  assert.equal((await app.fetch(req('pellet-v3', { t: 'del', id: 's0', nid: 'note-1' }), env)).status, 400);
+  assert.deepEqual((await get(env, 'pellet-v3')).notes.map(r => r.body), [op.note.text]);
 });
 
 test('keeps newer conclusions and medicine scores across retries', async () => {
@@ -75,7 +66,11 @@ test('keeps newer conclusions and medicine scores across retries', async () => {
   assert.equal((await get(env, 'weapon-v9')).status[0].status, '');
   await post(env, 'medicine-v3', { t: 'score', id: 'drink', voter: 'uid', at: 20, fun: 5, clear: 3, cost: 2 });
   await post(env, 'medicine-v3', { t: 'score', id: 'drink', voter: 'uid', at: 10, fun: 1, clear: 1, cost: 1 });
-  assert.equal((await get(env, 'medicine-v3')).scores[0].fun, 5);
+  const [publicScore] = (await get(env, 'medicine-v3')).scores;
+  assert.equal(publicScore.fun, 5);
+  assert.equal(publicScore.mine, 0);
+  assert.equal(Object.hasOwn(publicScore, 'voter'), false);
+  assert.equal((await get(env, 'medicine-v3', { 'X-Review-Ballot': 'uid' })).scores[0].mine, 1);
 });
 
 test('stores interaction status separately from subsequent opinions', async () => {
@@ -88,7 +83,8 @@ test('stores interaction status separately from subsequent opinions', async () =
   const { records } = await get(env, 'interaction');
   assert.equal(records.length, 2);
   assert.equal(records.findLast(r => r.status !== null).status, 'adopt');
-  assert.equal(records.find(r => r.comment === '好').reviewer, 'reviewer');
+  assert.equal(Object.hasOwn(records.find(r => r.comment === '好'), 'reviewer'), false);
+  assert.equal(env.raw.prepare("SELECT reviewer FROM interaction_reviews WHERE id = '2'").get().reviewer, '');
 });
 
 test('migrates current versions idempotently and preserves legacy interaction data', async () => {
@@ -104,6 +100,7 @@ test('migrates current versions idempotently and preserves legacy interaction da
   env.raw.exec(dump);
   assert.equal((await get(env, 'weapon-v9')).status[0].status, 'adopt');
   assert.equal((await get(env, 'weapon-v9')).notes[0].body, legacy.weapon3_notes[0].body);
-  assert.equal((await get(env, 'interaction')).records[0].reviewer, '旧评审人');
+  assert.equal(env.raw.prepare("SELECT reviewer FROM interaction_reviews").get().reviewer, '旧评审人');
+  assert.equal(Object.hasOwn((await get(env, 'interaction')).records[0], 'reviewer'), false);
   assert.equal((await get(env, 'interaction')).records.length, 1);
 });
