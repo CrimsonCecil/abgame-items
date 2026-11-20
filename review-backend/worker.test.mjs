@@ -73,6 +73,29 @@ test('keeps newer conclusions and medicine scores across retries', async () => {
   assert.equal((await get(env, 'medicine-v3', { 'X-Review-Ballot': 'uid' })).scores[0].mine, 1);
 });
 
+test('serves V0.4 medicine reviews separately from V0.3', async () => {
+  const env = database();
+  const id = 'potion_s';
+  const prior = { t: 'status', id, at: 10, status: 'defer' };
+  await post(env, 'medicine-v3', prior);
+  const response = await app.fetch(req('medicine-v4'), env);
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), { status: [], notes: [], scores: [] });
+
+  const note = { id: 'note-v4', text: '小血瓶回血反馈', at: 20 };
+  await post(env, 'medicine-v4', { ...prior, at: 20, status: 'adopt' });
+  await post(env, 'medicine-v4', { t: 'add', id, note });
+  await post(env, 'medicine-v4', { t: 'score', id, voter: 'uid', at: 20, fun: 5, clear: 4, cost: 3 });
+  const reviews = await get(env, 'medicine-v4', { 'X-Review-Ballot': 'uid' });
+  assert.deepEqual(reviews.status.map(r => r.status), ['adopt']);
+  assert.deepEqual(reviews.notes.map(r => r.body), [note.text]);
+  assert.deepEqual(reviews.scores.map(r => [r.mine, r.fun, r.clear, r.cost]), [[1, 5, 4, 3]]);
+  const historical = await get(env, 'medicine-v3');
+  assert.deepEqual(historical.status.map(r => r.status), ['defer']);
+  assert.deepEqual(historical.notes, []);
+  assert.deepEqual(historical.scores, []);
+});
+
 test('stores interaction status separately from subsequent opinions', async () => {
   const env = database();
   const base = { item_id: 'emote/wave', item_name: '挥手', reviewer: 'spoof' };

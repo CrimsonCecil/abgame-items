@@ -1,7 +1,8 @@
 const base = '/abgame-items/';
 const api = base + 'api/reviews/';
 const source = 'https://crimsoncecil.github.io';
-const documents = new Set(['interaction', 'weapon-v9', 'medicine-v3', 'loot', 'pellet-v3']);
+const scoredDocuments = new Set(['medicine-v3', 'medicine-v4']);
+const documents = new Set(['interaction', 'weapon-v9', ...scoredDocuments, 'loot', 'pellet-v3']);
 const statuses = new Set(['adopt', 'defer', 'drop']);
 const maxBodySize = 8192;
 
@@ -49,7 +50,7 @@ function write(db, doc, op) {
     return db.prepare(`INSERT INTO item_notes (doc, item_id, id, body, created_at) VALUES (?, ?, ?, ?, ?)
       ON CONFLICT (doc, item_id, id) DO NOTHING`).bind(doc, op.id, op.note.id, op.note.text, op.note.at);
   }
-  if (op.t === 'score' && doc === 'medicine-v3' && key(op.voter) && [op.fun, op.clear, op.cost].every(stars) && time(op.at)) {
+  if (op.t === 'score' && scoredDocuments.has(doc) && key(op.voter) && [op.fun, op.clear, op.cost].every(stars) && time(op.at)) {
     return db.prepare(`INSERT INTO item_scores VALUES (?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT (doc, item_id, voter) DO UPDATE SET fun = excluded.fun, clear = excluded.clear, cost = excluded.cost,
       updated_at = excluded.updated_at WHERE excluded.updated_at >= item_scores.updated_at`)
