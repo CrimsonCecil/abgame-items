@@ -1,0 +1,12 @@
+{
+  "name": "abgame-online-reviews",
+  "main": "worker.mjs",
+  "compatibility_date": "2025-10-31",
+  "workers_dev": false,
+  "preview_urls": false,
+  "d1_databases": [{
+    "binding": "REVIEWS",
+    "database_name": "abgame-online-reviews",
+    "database_id": "00000000-0000-0000-0000-000000000000"
+  }]
+}

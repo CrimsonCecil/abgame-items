@@ -138,12 +138,16 @@ details[open]>.more::before{transform:rotate(90deg)}
 <footer class="foot"><span class="st rev">评审修订 · 已落实线上意见</span><span class="st ing">评审中</span><span class="st wait">待评审</span><span class="sp"></span><span>ABGame · 物品 &amp; 背包系统 V1.9</span></footer>
 </main>
 <div class="zbox" id="zbox" hidden><img id="zimg" alt=""><p id="zcap"></p></div>
-<script>(function(){var E=(location.protocol==='file:'||/github\.io$/.test(location.hostname))?'l':(/workbuddy\.host$/.test(location.hostname)?'w':'p');
+<script>(function(){var reviewHost='https://abgame-review.kccecil.com';
+var E=(location.protocol==='file:'||/github\.io$/.test(location.hostname)||location.origin===reviewHost||/^(localhost|127\.0\.0\.1)$/.test(location.hostname))?'l':(/workbuddy\.host$/.test(location.hostname)?'w':'p');
 var sc=new URLSearchParams(location.search).get('sharecode'),fr=false;try{fr=window.top!==window.self}catch(e){fr=true}
 document.querySelectorAll('a[data-l]').forEach(function(a){var h=a.getAttribute('data-'+E);
 if(!h){a.style.display='none';return;}
 if(E==='w'&&sc&&!/^https?:/.test(h))h+=(h.indexOf('?')>=0?'&':'?')+'sharecode='+encodeURIComponent(sc);
-a.setAttribute('href',h);if(E==='p'&&fr&&/^https?:/.test(h)){a.target='_blank';a.rel='noopener';}});
+a.setAttribute('href',h);if(E==='p'&&fr&&/^https?:/.test(h)){a.target='_blank';a.rel='noopener';}
+if(E==='l'&&location.origin!==reviewHost&&a.matches('.cat .pri')&&/^\.\.\/(武器|药品|精灵球|功能战利品)\//.test(h)){
+var r=document.createElement('a');r.className='btn';r.textContent='在线评审';r.href=reviewHost+'/abgame-items/'+h.slice(3);a.after(r);
+}});
 document.querySelectorAll('[data-only]').forEach(function(n){if(n.getAttribute('data-only').indexOf(E)<0)n.style.display='none';});
 document.documentElement.setAttribute('data-env',E);})();
 (function(){var zb=document.getElementById('zbox'),zi=document.getElementById('zimg'),zc=document.getElementById('zcap');

@@ -9,6 +9,14 @@
 html{scroll-behavior:smooth}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:16px;line-height:1.65}
 .layout{display:grid;grid-template-columns:232px minmax(0,1fr);max-width:1280px;margin:0 auto}
+.review-entry{position:fixed;right:16px;bottom:16px;z-index:5;padding:7px 14px;border-radius:99px;background:var(--ink);color:#fff;text-decoration:none}
+.doc-review{margin-top:22px;padding:16px;background:var(--paper);border:1.5px solid var(--line);border-radius:16px}
+.doc-review form{display:grid;gap:8px}.doc-review textarea{width:100%;min-height:82px;resize:vertical}
+.doc-review textarea,.doc-review select{padding:7px 10px;border:1px solid var(--line);border-radius:9px;font:inherit}
+.doc-review button{justify-self:start;padding:7px 14px;border:0;border-radius:9px;background:var(--ink);color:#fff;font:inherit;cursor:pointer}
+.doc-review button:disabled{opacity:.45;cursor:default}.doc-review ul{list-style:none;padding:0}
+.doc-review li{border-top:1px solid var(--line);padding:8px 0}.doc-review li p{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+.doc-review time,.doc-review [role="status"]{color:var(--muted);font-size:.86em}
 /* 竖向目录 */
 aside{position:sticky;top:0;align-self:start;height:100vh;overflow:auto;padding:22px 14px 22px 18px;border-right:1.5px dashed var(--line)}
 .brand{display:flex;gap:10px;align-items:center;margin-bottom:14px}
@@ -107,6 +115,18 @@ td.ok,td.no{text-align:center}
   <div class="chips"><span class="chip">长按瞄准 · 松手拍</span><span class="chip">一次一只</span><span class="chip">上下半身分离</span><span class="chip">品阶只影响概率</span></div></div>
   <svg viewBox="0 0 200 200"><use href="#i-cam" x="10" y="12" width="180" height="178"/></svg>
 </header>
+<a class="review-entry" href="#document-review">填写评审意见</a>
+<section id="document-review" class="doc-review" data-review-document="pellet-v3" aria-labelledby="review-title">
+  <h2 id="review-title">评审意见</h2>
+  <a data-open-review>打开在线评审 →</a>
+  <form>
+    <label>关联段落 <select><option value="general">整份需求</option></select></label>
+    <textarea aria-label="评审意见" maxlength="2000" placeholder="填写意见或评论（Ctrl + Enter 提交）" required></textarea>
+    <button>记录意见</button>
+  </form>
+  <p role="status"></p>
+  <ul aria-label="已记录的评审意见"></ul>
+</section>
 
 <section id="s0" data-t="本版改动">
 <h2><em>00</em>本版改动 <span>相对 V0.2</span></h2>
@@ -396,6 +416,8 @@ td.ok,td.no{text-align:center}
 </table></div>
 </section>
 </main></div>
+<script src="../../review/client.js"></script>
+<script src="../../review/document.js"></script>
 <div id="lb"><span class="x">关闭</span><div class="box"></div></div>
 <script>
 /* ---------- 形状 ---------- */
@@ -749,7 +771,7 @@ document.getElementById('mk-ok').innerHTML=SH.monster({})+`<g transform="transla
 document.getElementById('mk-no').innerHTML=`<g transform="scale(.62)">${SH.boss({})}</g><g transform="translate(0,-48)">${SH.mk({ok:0,w:88,h:100})}</g>`;
 document.querySelectorAll('[data-scene]').forEach(el=>{el.outerHTML=build(SC[el.dataset.scene])});
 /* 竖向目录 */
-const toc=document.getElementById('toc'),secs=[...document.querySelectorAll('main section')];
+const toc=document.getElementById('toc'),secs=[...document.querySelectorAll('main section[data-t]')];
 secs.forEach((s,i)=>{const a=document.createElement('a');a.href='#'+s.id;a.innerHTML=`<em>${String(i).padStart(2,'0')}</em>${s.dataset.t}`;toc.appendChild(a)});
 const links=[...toc.children];
 const spy=()=>{let k=0;secs.forEach((s,i)=>{if(s.getBoundingClientRect().top<140)k=i});
