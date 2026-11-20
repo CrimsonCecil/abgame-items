@@ -1,7 +1,7 @@
 const base = '/abgame-items/';
 const api = base + 'api/reviews/';
 const source = 'https://crimsoncecil.github.io';
-const documents = new Set(['interaction', 'weapon-v9', 'medicine-v3', 'loot', 'pellet-v3']);
+const documents = new Set(['interaction', 'weapon-v9', 'medicine-v3', 'loot', 'pellet-v3', 'pellet-v4']);
 const statuses = new Set(['adopt', 'defer', 'drop']);
 const maxBodySize = 8192;
 
